@@ -1,0 +1,563 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXContainerItemProxy section */
+		49744AF32DDE0A860087D862 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 49744ADD2DDE0A820087D862 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 49744AE42DDE0A820087D862;
+			remoteInfo = "ISMM-GestureTeleop";
+		};
+		49744AFD2DDE0A860087D862 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 49744ADD2DDE0A820087D862 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 49744AE42DDE0A820087D862;
+			remoteInfo = "ISMM-GestureTeleop";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		49744AE52DDE0A820087D862 /* ISMM-GestureTeleop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ISMM-GestureTeleop.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		49744AF22DDE0A860087D862 /* ISMM-GestureTeleopTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ISMM-GestureTeleopTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		49744AFC2DDE0A860087D862 /* ISMM-GestureTeleopUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ISMM-GestureTeleopUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		49744AE72DDE0A820087D862 /* ISMM-GestureTeleop */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "ISMM-GestureTeleop";
+			sourceTree = "<group>";
+		};
+		49744AF52DDE0A860087D862 /* ISMM-GestureTeleopTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "ISMM-GestureTeleopTests";
+			sourceTree = "<group>";
+		};
+		49744AFF2DDE0A860087D862 /* ISMM-GestureTeleopUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "ISMM-GestureTeleopUITests";
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		49744AE22DDE0A820087D862 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		49744AEF2DDE0A860087D862 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		49744AF92DDE0A860087D862 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		49744ADC2DDE0A820087D862 = {
+			isa = PBXGroup;
+			children = (
+				49744AE72DDE0A820087D862 /* ISMM-GestureTeleop */,
+				49744AF52DDE0A860087D862 /* ISMM-GestureTeleopTests */,
+				49744AFF2DDE0A860087D862 /* ISMM-GestureTeleopUITests */,
+				49744AE62DDE0A820087D862 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		49744AE62DDE0A820087D862 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				49744AE52DDE0A820087D862 /* ISMM-GestureTeleop.app */,
+				49744AF22DDE0A860087D862 /* ISMM-GestureTeleopTests.xctest */,
+				49744AFC2DDE0A860087D862 /* ISMM-GestureTeleopUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		49744AE42DDE0A820087D862 /* ISMM-GestureTeleop */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 49744B062DDE0A860087D862 /* Build configuration list for PBXNativeTarget "ISMM-GestureTeleop" */;
+			buildPhases = (
+				49744AE12DDE0A820087D862 /* Sources */,
+				49744AE22DDE0A820087D862 /* Frameworks */,
+				49744AE32DDE0A820087D862 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				49744AE72DDE0A820087D862 /* ISMM-GestureTeleop */,
+			);
+			name = "ISMM-GestureTeleop";
+			packageProductDependencies = (
+			);
+			productName = "ISMM-GestureTeleop";
+			productReference = 49744AE52DDE0A820087D862 /* ISMM-GestureTeleop.app */;
+			productType = "com.apple.product-type.application";
+		};
+		49744AF12DDE0A860087D862 /* ISMM-GestureTeleopTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 49744B092DDE0A860087D862 /* Build configuration list for PBXNativeTarget "ISMM-GestureTeleopTests" */;
+			buildPhases = (
+				49744AEE2DDE0A860087D862 /* Sources */,
+				49744AEF2DDE0A860087D862 /* Frameworks */,
+				49744AF02DDE0A860087D862 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				49744AF42DDE0A860087D862 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				49744AF52DDE0A860087D862 /* ISMM-GestureTeleopTests */,
+			);
+			name = "ISMM-GestureTeleopTests";
+			packageProductDependencies = (
+			);
+			productName = "ISMM-GestureTeleopTests";
+			productReference = 49744AF22DDE0A860087D862 /* ISMM-GestureTeleopTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		49744AFB2DDE0A860087D862 /* ISMM-GestureTeleopUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 49744B0C2DDE0A860087D862 /* Build configuration list for PBXNativeTarget "ISMM-GestureTeleopUITests" */;
+			buildPhases = (
+				49744AF82DDE0A860087D862 /* Sources */,
+				49744AF92DDE0A860087D862 /* Frameworks */,
+				49744AFA2DDE0A860087D862 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				49744AFE2DDE0A860087D862 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				49744AFF2DDE0A860087D862 /* ISMM-GestureTeleopUITests */,
+			);
+			name = "ISMM-GestureTeleopUITests";
+			packageProductDependencies = (
+			);
+			productName = "ISMM-GestureTeleopUITests";
+			productReference = 49744AFC2DDE0A860087D862 /* ISMM-GestureTeleopUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		49744ADD2DDE0A820087D862 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1630;
+				LastUpgradeCheck = 1630;
+				TargetAttributes = {
+					49744AE42DDE0A820087D862 = {
+						CreatedOnToolsVersion = 16.3;
+					};
+					49744AF12DDE0A860087D862 = {
+						CreatedOnToolsVersion = 16.3;
+						TestTargetID = 49744AE42DDE0A820087D862;
+					};
+					49744AFB2DDE0A860087D862 = {
+						CreatedOnToolsVersion = 16.3;
+						TestTargetID = 49744AE42DDE0A820087D862;
+					};
+				};
+			};
+			buildConfigurationList = 49744AE02DDE0A820087D862 /* Build configuration list for PBXProject "ISMM-GestureTeleop" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 49744ADC2DDE0A820087D862;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 49744AE62DDE0A820087D862 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				49744AE42DDE0A820087D862 /* ISMM-GestureTeleop */,
+				49744AF12DDE0A860087D862 /* ISMM-GestureTeleopTests */,
+				49744AFB2DDE0A860087D862 /* ISMM-GestureTeleopUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		49744AE32DDE0A820087D862 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		49744AF02DDE0A860087D862 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		49744AFA2DDE0A860087D862 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		49744AE12DDE0A820087D862 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		49744AEE2DDE0A860087D862 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		49744AF82DDE0A860087D862 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		49744AF42DDE0A860087D862 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 49744AE42DDE0A820087D862 /* ISMM-GestureTeleop */;
+			targetProxy = 49744AF32DDE0A860087D862 /* PBXContainerItemProxy */;
+		};
+		49744AFE2DDE0A860087D862 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 49744AE42DDE0A820087D862 /* ISMM-GestureTeleop */;
+			targetProxy = 49744AFD2DDE0A860087D862 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		49744B042DDE0A860087D862 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = RYWK4QT35K;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		49744B052DDE0A860087D862 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = RYWK4QT35K;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		49744B072DDE0A860087D862 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RYWK4QT35K;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "CHL-LEAP.ISMM-GestureTeleop";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		49744B082DDE0A860087D862 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RYWK4QT35K;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "CHL-LEAP.ISMM-GestureTeleop";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		49744B0A2DDE0A860087D862 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RYWK4QT35K;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "CHL-LEAP.ISMM-GestureTeleopTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ISMM-GestureTeleop.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ISMM-GestureTeleop";
+			};
+			name = Debug;
+		};
+		49744B0B2DDE0A860087D862 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RYWK4QT35K;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "CHL-LEAP.ISMM-GestureTeleopTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ISMM-GestureTeleop.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ISMM-GestureTeleop";
+			};
+			name = Release;
+		};
+		49744B0D2DDE0A860087D862 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RYWK4QT35K;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "CHL-LEAP.ISMM-GestureTeleopUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "ISMM-GestureTeleop";
+			};
+			name = Debug;
+		};
+		49744B0E2DDE0A860087D862 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RYWK4QT35K;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "CHL-LEAP.ISMM-GestureTeleopUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "ISMM-GestureTeleop";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		49744AE02DDE0A820087D862 /* Build configuration list for PBXProject "ISMM-GestureTeleop" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				49744B042DDE0A860087D862 /* Debug */,
+				49744B052DDE0A860087D862 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		49744B062DDE0A860087D862 /* Build configuration list for PBXNativeTarget "ISMM-GestureTeleop" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				49744B072DDE0A860087D862 /* Debug */,
+				49744B082DDE0A860087D862 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		49744B092DDE0A860087D862 /* Build configuration list for PBXNativeTarget "ISMM-GestureTeleopTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				49744B0A2DDE0A860087D862 /* Debug */,
+				49744B0B2DDE0A860087D862 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		49744B0C2DDE0A860087D862 /* Build configuration list for PBXNativeTarget "ISMM-GestureTeleopUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				49744B0D2DDE0A860087D862 /* Debug */,
+				49744B0E2DDE0A860087D862 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 49744ADD2DDE0A820087D862 /* Project object */;
+}
