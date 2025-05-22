@@ -29,9 +29,22 @@
 		49744AFC2DDE0A860087D862 /* ISMM-GestureTeleopUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ISMM-GestureTeleopUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		49744B472DDF3A3F0087D862 /* Exceptions for "ISMM-GestureTeleop" folder in "ISMM-GestureTeleop" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 49744AE42DDE0A820087D862 /* ISMM-GestureTeleop */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		49744AE72DDE0A820087D862 /* ISMM-GestureTeleop */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				49744B472DDF3A3F0087D862 /* Exceptions for "ISMM-GestureTeleop" folder in "ISMM-GestureTeleop" target */,
+			);
 			path = "ISMM-GestureTeleop";
 			sourceTree = "<group>";
 		};
@@ -400,6 +413,9 @@
 				DEVELOPMENT_TEAM = RYWK4QT35K;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Needs access to camera";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Needs to connect on local network";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Needs microphone access";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -428,6 +444,9 @@
 				DEVELOPMENT_TEAM = RYWK4QT35K;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Needs access to camera";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "Needs to connect on local network";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Needs microphone access";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
