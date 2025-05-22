@@ -12,6 +12,10 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        streamer = ISMMGestureTeleopApp(host: "192.168.1.42", port: 5000)
+        streamer = ISMMGestureTeleopApp(host: "172.16.168.48", port: 5000)
+        // Add camera preview
+        if let streamer = streamer {
+            streamer.addPreviewLayer(to: self.view)
+        }
     }
 }

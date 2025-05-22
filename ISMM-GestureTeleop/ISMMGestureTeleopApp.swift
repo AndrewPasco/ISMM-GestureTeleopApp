@@ -11,18 +11,21 @@ import CoreImage
 import ImageIO
 import MobileCoreServices
 import Network
+import UniformTypeIdentifiers
 
-class ISMMGestureTeleopApp: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureDepthDataOutputDelegate {
+class ISMMGestureTeleopApp: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureDepthDataOutputDelegate, StreamDelegate {
     private let session = AVCaptureSession()
     private let videoOutput = AVCaptureVideoDataOutput()
     private let depthOutput = AVCaptureDepthDataOutput()
     private let host: String
-    private let port: UInt16
+    private let port: UInt32
 
     private var dataOutputSync: AVCaptureDataOutputSynchronizer?
     private var outputStream: OutputStream?
+    private var isConnected: Bool = false
+    private var readyToSend: Bool = false
     
-    init(host: String, port: UInt16) {
+    init(host: String, port: UInt32) {
         self.host = host
         self.port = port
         super.init()
@@ -48,8 +51,19 @@ class ISMMGestureTeleopApp: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         guard session.canAddInput(input) else { return }
         session.addInput(input)
 
+        // Frame rate limiting to ~15fps
+        do {
+            try device.lockForConfiguration()
+            device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: 30)
+            device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: 30)
+            device.unlockForConfiguration()
+        } catch {
+            print("Failed to configure frame rate: \(error)")
+        }
+        
         // Video output
         videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "videoQueue"))
+        videoOutput.alwaysDiscardsLateVideoFrames = true
         guard session.canAddOutput(videoOutput) else { return }
         session.addOutput(videoOutput)
 
@@ -72,7 +86,7 @@ class ISMMGestureTeleopApp: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         var writeStream: Unmanaged<CFWriteStream>?
 
         // Replace with your server's IP and port
-        CFStreamCreatePairWithSocketToHost(nil, "192.168.1.100" as CFString, 5000, &readStream, &writeStream)
+        CFStreamCreatePairWithSocketToHost(nil, host as CFString, port, &readStream, &writeStream)
 
         guard let out = writeStream?.takeRetainedValue() else {
             print("Failed to create output stream")
@@ -80,23 +94,90 @@ class ISMMGestureTeleopApp: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         }
 
         outputStream = out
+        outputStream?.delegate = self
+        isConnected = true
         outputStream?.schedule(in: .current, forMode: .default)
         outputStream?.open()
-    }
-
-    private func sendImageData(rgb: Data, depth: Data) {
-        guard let stream = outputStream else { return }
-
-        var packet = Data()
-        packet += withUnsafeBytes(of: UInt32(rgb.count).bigEndian, { Data($0) })
-        packet += rgb
-        packet += withUnsafeBytes(of: UInt32(depth.count).bigEndian, { Data($0) })
-        packet += depth
-
-        _ = packet.withUnsafeBytes {
-            stream.write($0.bindMemory(to: UInt8.self).baseAddress!, maxLength: packet.count)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.readyToSend = true
         }
     }
+
+    func sendImageData(rgbData: Data, depthData: Data) {
+        guard let outputStream = outputStream, isConnected else {
+            print("Not connected to server")
+            return
+        }
+        
+        let rgbLength = UInt32(rgbData.count)
+        let depthLength = UInt32(depthData.count)
+        
+        var header = Data()
+        header.append(contentsOf: withUnsafeBytes(of: rgbLength.bigEndian, Array.init))
+        header.append(contentsOf: withUnsafeBytes(of: depthLength.bigEndian, Array.init))
+        
+        let payload = header + rgbData + depthData
+        
+        let result = payload.withUnsafeBytes {
+            outputStream.write($0.bindMemory(to: UInt8.self).baseAddress!, maxLength: payload.count)
+        }
+        
+        if result <= 0 {
+            print("Stream write failed: \(result)")
+            if let error = outputStream.streamError {
+                print("Stream error: \(error.localizedDescription)")
+            }
+            
+            outputStream.close()
+            self.outputStream = nil
+            self.isConnected = false
+            
+            DispatchQueue.global().asyncAfter(deadline: .now() + 1.0) {
+                self.setupTCPConnection()
+            }
+        }
+    }
+        
+    func stream(_ aStream: Stream, handle eventCode: Stream.Event) {
+        switch eventCode {
+        case .openCompleted:
+            print("Stream opened")
+            isConnected = true
+
+        case .hasSpaceAvailable:
+            isConnected = true
+
+        case .errorOccurred:
+            print("Stream error occurred")
+            isConnected = false
+            aStream.close()
+            outputStream = nil
+            DispatchQueue.global().asyncAfter(deadline: .now() + 1.0) {
+                self.setupTCPConnection()
+            }
+
+        case .endEncountered:
+            print("Stream ended")
+            isConnected = false
+            aStream.close()
+            outputStream = nil
+            DispatchQueue.global().asyncAfter(deadline: .now() + 1.0) {
+                self.setupTCPConnection()
+            }
+
+        default:
+            break
+        }
+    }
+
+    func addPreviewLayer(to view: UIView) {
+        let previewLayer = AVCaptureVideoPreviewLayer(session: session)
+        previewLayer.videoGravity = .resizeAspectFill
+        previewLayer.frame = view.bounds
+        view.layer.insertSublayer(previewLayer, at: 0)
+    }
+
 }
 
 // MARK: - Synchronizer Delegate
@@ -104,6 +185,7 @@ class ISMMGestureTeleopApp: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
 extension ISMMGestureTeleopApp: AVCaptureDataOutputSynchronizerDelegate {
     func dataOutputSynchronizer(_ synchronizer: AVCaptureDataOutputSynchronizer,
                                 didOutput synchronizedDataCollection: AVCaptureSynchronizedDataCollection) {
+        guard readyToSend else { return }
         guard
             let syncedVideoData = synchronizedDataCollection.synchronizedData(for: videoOutput) as? AVCaptureSynchronizedSampleBufferData,
             let syncedDepthData = synchronizedDataCollection.synchronizedData(for: depthOutput) as? AVCaptureSynchronizedDepthData,
@@ -113,13 +195,17 @@ extension ISMMGestureTeleopApp: AVCaptureDataOutputSynchronizerDelegate {
             return
         }
 
-        guard let rgbData = encodeRGBToJPEG(sampleBuffer: syncedVideoData.sampleBuffer),
-              let depthData = encodeDepthTo16BitPNG(depthData: syncedDepthData.depthData)
-        else {
-            return
-        }
+        // Offload processing to global concurrent queue
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard
+                let rgbData = self?.encodeRGBToJPEG(sampleBuffer: syncedVideoData.sampleBuffer),
+                let depthData = self?.encodeDepthTo16BitPNG(depthData: syncedDepthData.depthData)
+            else {
+                return
+            }
 
-        sendImageData(rgb: rgbData, depth: depthData)
+            self?.sendImageData(rgbData: rgbData, depthData: depthData)
+        }
     }
 
     private func encodeRGBToJPEG(sampleBuffer: CMSampleBuffer) -> Data? {
@@ -130,7 +216,7 @@ extension ISMMGestureTeleopApp: AVCaptureDataOutputSynchronizerDelegate {
         guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else { return nil }
 
         let jpegData = NSMutableData()
-        guard let destination = CGImageDestinationCreateWithData(jpegData, kUTTypeJPEG, 1, nil) else { return nil }
+        guard let destination = CGImageDestinationCreateWithData(jpegData, UTType.jpeg.identifier as CFString, 1, nil) else { return nil }
         CGImageDestinationAddImage(destination, cgImage, nil)
         CGImageDestinationFinalize(destination)
 
@@ -142,8 +228,14 @@ extension ISMMGestureTeleopApp: AVCaptureDataOutputSynchronizerDelegate {
         let depthBuffer = convertedDepth.depthDataMap
         CVPixelBufferLockBaseAddress(depthBuffer, .readOnly)
 
+        defer {
+            CVPixelBufferUnlockBaseAddress(depthBuffer, .readOnly)
+        }
+
         let width = CVPixelBufferGetWidth(depthBuffer)
         let height = CVPixelBufferGetHeight(depthBuffer)
+        let rowBytes = width * MemoryLayout<UInt16>.size
+
         var uint16Buffer = [UInt16](repeating: 0, count: width * height)
 
         for y in 0..<height {
@@ -151,39 +243,48 @@ extension ISMMGestureTeleopApp: AVCaptureDataOutputSynchronizerDelegate {
             let floatRow = row.assumingMemoryBound(to: Float32.self)
             for x in 0..<width {
                 let depthMeters = floatRow[x]
-                let depthMillimeters = max(0, min(UInt16(depthMeters * 1000), 65535))
+                let depthMillimeters = UInt16(clamping: Int(depthMeters * 1000))
                 uint16Buffer[y * width + x] = depthMillimeters
             }
         }
 
-        CVPixelBufferUnlockBaseAddress(depthBuffer, .readOnly)
+        // Create CGImage from uint16Buffer
+        let colorSpace = CGColorSpace(name: CGColorSpace.linearGray)!
+        let imageData = uint16Buffer.withUnsafeBufferPointer { bufferPointer in
+            return Data(buffer: bufferPointer)
+        }
 
-        let bitsPerComponent = 16
-        let bitsPerPixel = 16
-        let bytesPerRow = width * 2
-        let colorSpace = CGColorSpaceCreateDeviceGray()
-        guard let providerRef = CGDataProvider(data: Data(bytes: &uint16Buffer, count: uint16Buffer.count * 2) as CFData) else {
+        guard let providerRef = CGDataProvider(data: imageData as CFData) else {
             return nil
         }
 
-        guard let cgImage = CGImage(width: width,
-                                    height: height,
-                                    bitsPerComponent: bitsPerComponent,
-                                    bitsPerPixel: bitsPerPixel,
-                                    bytesPerRow: bytesPerRow,
-                                    space: colorSpace,
-                                    bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.none.rawValue),
-                                    provider: providerRef,
-                                    decode: nil,
-                                    shouldInterpolate: false,
-                                    intent: .defaultIntent) else {
+        guard let cgImage = CGImage(
+            width: width,
+            height: height,
+            bitsPerComponent: 16,
+            bitsPerPixel: 16,
+            bytesPerRow: rowBytes,
+            space: colorSpace,
+            bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.none.rawValue),
+            provider: providerRef,
+            decode: nil,
+            shouldInterpolate: false,
+            intent: .defaultIntent
+        ) else {
             return nil
         }
 
+        // Encode to PNG
         let pngData = NSMutableData()
-        guard let dest = CGImageDestinationCreateWithData(pngData, kUTTypePNG, 1, nil) else { return nil }
-        CGImageDestinationAddImage(dest, cgImage, nil)
-        CGImageDestinationFinalize(dest)
+        guard let destination = CGImageDestinationCreateWithData(pngData, UTType.png.identifier as CFString, 1, nil) else {
+            return nil
+        }
+        CGImageDestinationAddImage(destination, cgImage, nil)
+        guard CGImageDestinationFinalize(destination) else {
+            return nil
+        }
+
         return pngData as Data
     }
+
 }
