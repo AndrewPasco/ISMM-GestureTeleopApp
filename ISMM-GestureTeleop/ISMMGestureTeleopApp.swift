@@ -108,6 +108,11 @@ class ISMMGestureTeleopApp: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         if session.canAddOutput(videoOutput) {
             session.addOutput(videoOutput)
         }
+        
+        // Enable Intrinsic Matrix
+        if let connection = videoOutput.connection(with: .video) {
+            connection.isCameraIntrinsicMatrixDeliveryEnabled = true
+        }
 
         // Setup depth output
         if session.canAddOutput(depthOutput) {
@@ -144,6 +149,23 @@ class ISMMGestureTeleopApp: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         if output == videoOutput {
             guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
             latestRGBBuffer = pixelBuffer
+            
+            if let attachment = CMGetAttachment(sampleBuffer,
+                                                    key: kCMSampleBufferAttachmentKey_CameraIntrinsicMatrix,
+                                                    attachmentModeOut: nil) {
+                let matrixData = attachment as! CFData
+                var intrinsicMatrix = matrix_float3x3()
+                CFDataGetBytes(matrixData,
+                               CFRange(location: 0, length: MemoryLayout<matrix_float3x3>.size),
+                               &intrinsicMatrix)
+
+                print("RGB Camera Intrinsic Matrix:")
+                print("[[\(intrinsicMatrix.columns.0.x), \(intrinsicMatrix.columns.1.x), \(intrinsicMatrix.columns.2.x)]")
+                print(" [\(intrinsicMatrix.columns.0.y), \(intrinsicMatrix.columns.1.y), \(intrinsicMatrix.columns.2.y)]")
+                print(" [\(intrinsicMatrix.columns.0.z), \(intrinsicMatrix.columns.1.z), \(intrinsicMatrix.columns.2.z)]]")
+            } else {
+                print("No intrinsic matrix found in RGB sampleBuffer.")
+            }
         }
         sendIfBothAvailable()
     }

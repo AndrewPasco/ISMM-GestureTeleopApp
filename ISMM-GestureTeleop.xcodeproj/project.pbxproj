@@ -30,7 +30,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		49744B472DDF3A3F0087D862 /* Exceptions for "ISMM-GestureTeleop" folder in "ISMM-GestureTeleop" target */ = {
+		D47FC5302DE86ABC00601091 /* Exceptions for "ISMM-GestureTeleop" folder in "ISMM-GestureTeleop" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -43,7 +43,7 @@
 		49744AE72DDE0A820087D862 /* ISMM-GestureTeleop */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				49744B472DDF3A3F0087D862 /* Exceptions for "ISMM-GestureTeleop" folder in "ISMM-GestureTeleop" target */,
+				D47FC5302DE86ABC00601091 /* Exceptions for "ISMM-GestureTeleop" folder in "ISMM-GestureTeleop" target */,
 			);
 			path = "ISMM-GestureTeleop";
 			sourceTree = "<group>";
@@ -188,6 +188,7 @@
 				TargetAttributes = {
 					49744AE42DDE0A820087D862 = {
 						CreatedOnToolsVersion = 16.3;
+						LastSwiftMigration = 1630;
 					};
 					49744AF12DDE0A860087D862 = {
 						CreatedOnToolsVersion = 16.3;
@@ -342,7 +343,9 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_INSTALL_OBJC_HEADER = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_PRECOMPILE_BRIDGING_HEADER = YES;
 			};
 			name = Debug;
 		};
@@ -399,6 +402,8 @@
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_INSTALL_OBJC_HEADER = YES;
+				SWIFT_PRECOMPILE_BRIDGING_HEADER = YES;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -408,6 +413,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = RYWK4QT35K;
@@ -429,6 +435,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "CHL-LEAP.ISMM-GestureTeleop";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -439,6 +446,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = RYWK4QT35K;
@@ -460,6 +468,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "CHL-LEAP.ISMM-GestureTeleop";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "ISMM-GestureTeleop/ISMM-GestureTeleop-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
