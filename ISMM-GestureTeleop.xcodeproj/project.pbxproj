@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		D4502D002DE87AD200AF8608 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = D4502CFF2DE87AD200AF8608 /* README.md */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		49744AF32DDE0A860087D862 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		49744AE52DDE0A820087D862 /* ISMM-GestureTeleop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ISMM-GestureTeleop.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		49744AF22DDE0A860087D862 /* ISMM-GestureTeleopTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ISMM-GestureTeleopTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		49744AFC2DDE0A860087D862 /* ISMM-GestureTeleopUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ISMM-GestureTeleopUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		D4502CFF2DE87AD200AF8608 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -92,6 +97,7 @@
 				49744AF52DDE0A860087D862 /* ISMM-GestureTeleopTests */,
 				49744AFF2DDE0A860087D862 /* ISMM-GestureTeleopUITests */,
 				49744AE62DDE0A820087D862 /* Products */,
+				D4502CFF2DE87AD200AF8608 /* README.md */,
 			);
 			sourceTree = "<group>";
 		};
@@ -226,6 +232,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D4502D002DE87AD200AF8608 /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
