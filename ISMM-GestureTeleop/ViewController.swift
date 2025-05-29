@@ -9,8 +9,8 @@ import UIKit
 
 class ViewController: UIViewController {
 
-    var streamer: ISMMGestureTeleopApp?
-    
+    private var appCoordinator: ISMMGestureTeleopApp?
+
     private let statusLabel = UILabel()
     private let ipTextField = UITextField()
     private let connectButton = UIButton(type: .system)
@@ -18,18 +18,15 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black
-        
         setupUI()
     }
-    
+
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        streamer?.updatePreviewFrame()
+        appCoordinator?.updatePreviewFrame()
     }
 
-
     private func setupUI() {
-        // === Status Label ===
         statusLabel.text = "Not Connected"
         statusLabel.textColor = .white
         statusLabel.backgroundColor = UIColor.black.withAlphaComponent(0.6)
@@ -40,7 +37,6 @@ class ViewController: UIViewController {
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(statusLabel)
 
-        // === IP Text Field ===
         ipTextField.placeholder = "Enter IP Address"
         ipTextField.text = "172.16.168.48"  // Default IP
         ipTextField.borderStyle = .roundedRect
@@ -50,7 +46,6 @@ class ViewController: UIViewController {
         ipTextField.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(ipTextField)
 
-        // === Connect Button ===
         connectButton.setTitle("Connect", for: .normal)
         connectButton.setTitleColor(.white, for: .normal)
         connectButton.backgroundColor = .systemBlue
@@ -60,7 +55,6 @@ class ViewController: UIViewController {
         connectButton.addTarget(self, action: #selector(connectButtonTapped), for: .touchUpInside)
         view.addSubview(connectButton)
 
-        // === Layout Constraints ===
         NSLayoutConstraint.activate([
             ipTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
             ipTextField.centerXAnchor.constraint(equalTo: view.centerXAnchor),
@@ -80,18 +74,17 @@ class ViewController: UIViewController {
     }
 
     @objc private func connectButtonTapped() {
-        view.endEditing(true) // dismiss keyboard
-        
+        view.endEditing(true)
+
         guard let ip = ipTextField.text, !ip.isEmpty else {
             statusLabel.text = "Invalid IP"
             return
         }
 
-        // Only instantiate once
-        if streamer == nil {
-            streamer = ISMMGestureTeleopApp(host: ip, port: 5000, previewView: self.view)
+        if appCoordinator == nil {
+            appCoordinator = ISMMGestureTeleopApp(host: ip, port: 5000, previewView: self.view)
 
-            streamer?.onConnectionStatusChange = { [weak self] status in
+            appCoordinator?.onConnectionStatusChange = { [weak self] status in
                 DispatchQueue.main.async {
                     self?.statusLabel.text = {
                         switch status {
@@ -105,6 +98,6 @@ class ViewController: UIViewController {
             }
         }
 
-        streamer?.connectToServer(host: ip, port: 5000)
+        appCoordinator?.connectToServer()
     }
 }
