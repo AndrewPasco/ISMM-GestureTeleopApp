@@ -33,6 +33,7 @@ class ISMMGestureTeleopApp: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     private var latestDepthData: AVDepthData?
     private var isConnected = false
     private var reconnectTimer: Timer?
+    private var previewView: UIView?
     private var previewLayer: AVCaptureVideoPreviewLayer?
     
     private var connectionHost: String = ""
@@ -46,13 +47,13 @@ class ISMMGestureTeleopApp: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         self.connectionHost = host
         self.connectionPort = port
         super.init()
-        connectToServer(host: host, port: port)
+        //connectToServer(host: host, port: port) // commented if calling from button
         setupCamera(previewView: previewView)
     }
 
     // MARK: - TCP Connection
 
-    private func connectToServer(host: String, port: Int) {
+    public func connectToServer(host: String, port: Int) {
         onConnectionStatusChange?(.connecting)
         isConnected = false
 
@@ -125,6 +126,7 @@ class ISMMGestureTeleopApp: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         session.commitConfiguration()
 
         // Preview
+        self.previewView = previewView
         let previewLayer = AVCaptureVideoPreviewLayer(session: session)
         previewLayer.videoGravity = .resizeAspectFill
         previewLayer.frame = previewView.bounds
@@ -140,11 +142,22 @@ class ISMMGestureTeleopApp: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
             print("Failed to lock device for frame rate config: \(error)")
         }
         
-        session.startRunning()
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            self?.session.startRunning()
+        }
     }
 
     // MARK: - Delegate Methods
 
+    func updatePreviewFrame() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self,
+                  let previewView = self.previewView,
+                  let previewLayer = self.previewLayer else { return }
+            previewLayer.frame = previewView.bounds
+        }
+    }
+    
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         if output == videoOutput {
             guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
