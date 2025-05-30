@@ -34,7 +34,7 @@ class FrameEncoder {
             let floatPointer = baseAddress.assumingMemoryBound(to: Float32.self)
 
             let floatCount = width * height
-            let maxDepth: Float = 5.0
+            let maxDepth: Float = 1.0
             var depth16 = [UInt16](repeating: 0, count: floatCount)
 
             for i in 0..<floatCount {

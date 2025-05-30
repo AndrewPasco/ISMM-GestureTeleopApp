@@ -49,16 +49,22 @@ class CameraManager: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVC
         ]
         session.addOutput(videoOutput)
 
-        if let connection = videoOutput.connection(with: .video) {
-            connection.isCameraIntrinsicMatrixDeliveryEnabled = true
+        if let videoConnection = videoOutput.connection(with: .video) {
+            videoConnection.isCameraIntrinsicMatrixDeliveryEnabled = true
         }
 
         if session.canAddOutput(depthOutput) {
             session.addOutput(depthOutput)
         }
         depthOutput.setDelegate(self, callbackQueue: queue)
-        depthOutput.isFilteringEnabled = true
-
+        depthOutput.isFilteringEnabled = false // example has false "filtering depth data alters the data such that it may no longer be suitable for computer vision tasks"
+        if let connection = depthOutput.connection(with: .depthData) {
+            connection.isEnabled = true
+        } else {
+            print("No AVCaptureConnection")
+        }
+        
+        
         session.commitConfiguration()
 
         let preview = AVCaptureVideoPreviewLayer(session: session)
