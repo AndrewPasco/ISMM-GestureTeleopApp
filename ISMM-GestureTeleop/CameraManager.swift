@@ -7,20 +7,26 @@
 
 import AVFoundation
 import UIKit
+import CoreImage
 
-class CameraManager: NSObject {
+class CameraManager: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     private let session = AVCaptureMultiCamSession()
     private let wideOutput = AVCaptureVideoDataOutput()
     private let uwOutput = AVCaptureVideoDataOutput()
     private let queue = DispatchQueue(label: "cameraQueue")
+    private let context = CIContext()
 
-    private var outputSynchronizer: AVCaptureDataOutputSynchronizer?
-    
     private var previewLayer: AVCaptureVideoPreviewLayer?
     private var previewContainerView: UIView?
 
     var onFrameCaptured: ((CVPixelBuffer, CVPixelBuffer) -> Void)?
     var debug: Bool = false
+
+    private var latestWideFrame: (buffer: CVPixelBuffer, timestamp: CMTime)?
+    private var latestUWFrame: (buffer: CVPixelBuffer, timestamp: CMTime)?
+    
+    private var hasPrintedWideIntrinsics = false
+    private var hasPrintedUWIntrinsics = false
 
     func setup(previewIn view: UIView) {
         self.previewContainerView = view
@@ -33,15 +39,19 @@ class CameraManager: NSObject {
         session.beginConfiguration()
 
         // Configure wide camera
-        guard let wideDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
-              let wideInput = try? AVCaptureDeviceInput(device: wideDevice),
+        guard let wideDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
+            print("Failed to get wide camera")
+            return
+        }
+
+        guard let wideInput = try? AVCaptureDeviceInput(device: wideDevice),
               session.canAddInput(wideInput) else {
             print("Failed to set up wide camera input")
             return
         }
         session.addInput(wideInput)
-        
-        // Wide camera output
+
+        wideOutput.setSampleBufferDelegate(self, queue: queue)
         wideOutput.videoSettings = [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
         ]
@@ -50,17 +60,25 @@ class CameraManager: NSObject {
             return
         }
         session.addOutput(wideOutput)
+        
+        if let wideConnection = wideOutput.connection(with: .video) {
+            wideConnection.isCameraIntrinsicMatrixDeliveryEnabled = true
+        }
 
-        // Configure ultra wide camera as second input
-        guard let ultraDevice = AVCaptureDevice.default(.builtInUltraWideCamera, for: .video, position: .back),
-              let ultraInput = try? AVCaptureDeviceInput(device: ultraDevice),
+        // Configure ultra-wide camera
+        guard let ultraDevice = AVCaptureDevice.default(.builtInUltraWideCamera, for: .video, position: .back) else {
+            print("Failed to get ultra wide camera")
+            return
+        }
+
+        guard let ultraInput = try? AVCaptureDeviceInput(device: ultraDevice),
               session.canAddInput(ultraInput) else {
             print("Failed to set up ultra wide camera input")
             return
         }
         session.addInput(ultraInput)
 
-        // Ultra wide camera output
+        uwOutput.setSampleBufferDelegate(self, queue: queue)
         uwOutput.videoSettings = [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
         ]
@@ -69,15 +87,14 @@ class CameraManager: NSObject {
             return
         }
         session.addOutput(uwOutput)
-
-
-        // Synchronize outputs
-        outputSynchronizer = AVCaptureDataOutputSynchronizer(dataOutputs: [wideOutput, uwOutput])
-        outputSynchronizer?.setDelegate(self, queue: queue)
+        
+        if let uwConnection = uwOutput.connection(with: .video) {
+            uwConnection.isCameraIntrinsicMatrixDeliveryEnabled = true
+        }
 
         session.commitConfiguration()
 
-        // Add preview layer using wide camera's connection
+        // Preview from wide camera
         if wideOutput.connection(with: .video) != nil {
             let preview = AVCaptureVideoPreviewLayer(session: session)
             preview.videoGravity = .resizeAspectFill
@@ -104,27 +121,91 @@ class CameraManager: NSObject {
             previewLayer.frame = containerView.bounds
         }
     }
-}
 
-extension CameraManager: AVCaptureDataOutputSynchronizerDelegate {
-    func dataOutputSynchronizer(_ synchronizer: AVCaptureDataOutputSynchronizer,
-                                didOutput synchronizedDataCollection: AVCaptureSynchronizedDataCollection) {
-        guard let wideData = synchronizedDataCollection.synchronizedData(for: wideOutput) as? AVCaptureSynchronizedSampleBufferData,
-              let uwData = synchronizedDataCollection.synchronizedData(for: uwOutput) as? AVCaptureSynchronizedSampleBufferData,
-              !wideData.sampleBufferWasDropped,
-              !uwData.sampleBufferWasDropped else {
-            return
-        }
-
-        guard let wideBuffer = CMSampleBufferGetImageBuffer(wideData.sampleBuffer),
-              let uwBuffer = CMSampleBufferGetImageBuffer(uwData.sampleBuffer) else {
-            return
-        }
-
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        guard let buffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        let timestamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+        
         if debug {
-            print("Synchronized wide and ultrawide frames captured.")
+            // Print Camera Intrinsics
+            let isWide = output == wideOutput
+            let isUW = output == uwOutput
+            
+            if (isWide && !hasPrintedWideIntrinsics) || (isUW && !hasPrintedUWIntrinsics) {
+                if let attachment = CMGetAttachment(sampleBuffer,
+                                                    key: kCMSampleBufferAttachmentKey_CameraIntrinsicMatrix,
+                                                    attachmentModeOut: nil) {
+                    let matrixData = attachment as! CFData
+                    var intrinsicMatrix = matrix_float3x3()
+                    CFDataGetBytes(matrixData,
+                                   CFRange(location: 0, length: MemoryLayout<matrix_float3x3>.size),
+                                   &intrinsicMatrix)
+                    
+                    let label = isWide ? "WIDE" : "ULTRA-WIDE"
+                    print("Intrinsic Matrix (\(label)):")
+                    print("[[\(intrinsicMatrix.columns.0.x), \(intrinsicMatrix.columns.1.x), \(intrinsicMatrix.columns.2.x)]")
+                    print(" [\(intrinsicMatrix.columns.0.y), \(intrinsicMatrix.columns.1.y), \(intrinsicMatrix.columns.2.y)]")
+                    print(" [\(intrinsicMatrix.columns.0.z), \(intrinsicMatrix.columns.1.z), \(intrinsicMatrix.columns.2.z)]]")
+                    
+                    if isWide { hasPrintedWideIntrinsics = true }
+                    if isUW { hasPrintedUWIntrinsics = true }
+                } else {
+                    print("No intrinsic matrix found in \(isWide ? "wide" : "ultra-wide") sampleBuffer.")
+                }
+            }
+        }
+        
+        // Obtain other latest frame
+        if output == wideOutput {
+            latestWideFrame = (buffer, timestamp)
+        } else if output == uwOutput {
+            latestUWFrame = (buffer, timestamp)
         }
 
-        onFrameCaptured?(wideBuffer, uwBuffer)
+        // Try to match frames
+        if let wide = latestWideFrame, let uw = latestUWFrame {
+            let delta = abs(CMTimeSubtract(wide.timestamp, uw.timestamp).seconds)
+            if delta < 0.015 { // Acceptable tolerance: 15ms
+                if debug {
+                    print("[CameraManager] Matched frames — Δt = \(String(format: "%.3f", delta))s")
+                }
+                // Resize both before passing to callback
+                if let resizedWide = resize(pixelBuffer: wide.buffer, to: CGSize(width: 640, height: 480)),
+                   let resizedUW = resize(pixelBuffer: uw.buffer, to: CGSize(width: 640, height: 480)) {
+                    onFrameCaptured?(resizedWide, resizedUW)
+                }
+                latestWideFrame = nil
+                latestUWFrame = nil
+            } else if debug { print("no matched frames found") }
+        }
+    }
+    
+    func resize(pixelBuffer: CVPixelBuffer, to size: CGSize) -> CVPixelBuffer? {
+        let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
+
+        let scaleX = size.width / CGFloat(CVPixelBufferGetWidth(pixelBuffer))
+        let scaleY = size.height / CGFloat(CVPixelBufferGetHeight(pixelBuffer))
+
+        let scaledImage = ciImage.transformed(by: CGAffineTransform(scaleX: scaleX, y: scaleY))
+
+        var outputBuffer: CVPixelBuffer?
+        let attrs = [
+            kCVPixelBufferCGImageCompatibilityKey: true,
+            kCVPixelBufferCGBitmapContextCompatibilityKey: true
+        ] as CFDictionary
+
+        let status = CVPixelBufferCreate(kCFAllocatorDefault,
+                                         Int(size.width),
+                                         Int(size.height),
+                                         CVPixelBufferGetPixelFormatType(pixelBuffer),
+                                         attrs,
+                                         &outputBuffer)
+
+        guard status == kCVReturnSuccess, let output = outputBuffer else {
+            return nil
+        }
+
+        context.render(scaledImage, to: output)
+        return output
     }
 }
