@@ -90,6 +90,7 @@ The app requires access to the rear-facing camera. Be sure to include the follow
 ```xml
 <key>NSCameraUsageDescription</key>
 <string>This app uses the camera to capture stereo images for teleoperation</string>
+/xml```
 
 ## Limitations
 
