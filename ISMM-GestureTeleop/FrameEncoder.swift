@@ -13,52 +13,39 @@ import AVFoundation
 class FrameEncoder {
     private let context = CIContext()
 
-    func encode(rgbBuffer: CVPixelBuffer, depthData: AVDepthData) -> Data? {
+    /// Encodes wide and uw CVPixelBuffers as JPEG and returns a Data packet.
+    /// The format is: [4 bytes wide length][4 bytes uw length][wide JPEG][uw JPEG]
+    func encode(wideBuffer: CVPixelBuffer, uwBuffer: CVPixelBuffer) -> Data? {
         autoreleasepool {
-            let ciImage = CIImage(cvPixelBuffer: rgbBuffer)
+            let wideImage = CIImage(cvPixelBuffer: wideBuffer)
+            let uwImage = CIImage(cvPixelBuffer: uwBuffer)
 
-            guard let rgbData = context.jpegRepresentation(of: ciImage, colorSpace: CGColorSpaceCreateDeviceRGB(), options: [:]) else {
-                print("Failed to encode RGB image")
+            guard let wideJPEG = context.jpegRepresentation(
+                of: wideImage,
+                colorSpace: CGColorSpaceCreateDeviceRGB(),
+                options: [:]
+            ) else {
+                print("Failed to encode wide image")
                 return nil
             }
 
-            let converted = depthData.converting(toDepthDataType: kCVPixelFormatType_DepthFloat32)
-            let floatBuffer = converted.depthDataMap
-            let width = CVPixelBufferGetWidth(floatBuffer)
-            let height = CVPixelBufferGetHeight(floatBuffer)
-
-            CVPixelBufferLockBaseAddress(floatBuffer, .readOnly)
-            defer { CVPixelBufferUnlockBaseAddress(floatBuffer, .readOnly) }
-
-            guard let baseAddress = CVPixelBufferGetBaseAddress(floatBuffer) else { return nil }
-            let floatPointer = baseAddress.assumingMemoryBound(to: Float32.self)
-
-            let floatCount = width * height
-            let maxDepth: Float = 1.0
-            var depth16 = [UInt16](repeating: 0, count: floatCount)
-
-            for i in 0..<floatCount {
-                let clamped = min(max(floatPointer[i], 0), maxDepth)
-                depth16[i] = UInt16((clamped / maxDepth) * Float(UInt16.max))
-            }
-
-            let depthData = Data(bytes: depth16, count: floatCount * MemoryLayout<UInt16>.size)
-            let provider = CGDataProvider(data: depthData as CFData)!
-            let colorSpace = CGColorSpaceCreateDeviceGray()
-            let cgImage = CGImage(width: width, height: height, bitsPerComponent: 16, bitsPerPixel: 16, bytesPerRow: width * 2, space: colorSpace, bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.none.rawValue), provider: provider, decode: nil, shouldInterpolate: false, intent: .defaultIntent)!
-
-            guard let depthPNG = context.pngRepresentation(of: CIImage(cgImage: cgImage), format: .L16, colorSpace: colorSpace) else {
-                print("Failed to encode depth PNG")
+            guard let uwJPEG = context.jpegRepresentation(
+                of: uwImage,
+                colorSpace: CGColorSpaceCreateDeviceRGB(),
+                options: [:]
+            ) else {
+                print("Failed to encode uw image")
                 return nil
             }
 
+            // Header with 4-byte big-endian lengths for each image
             var header = Data()
-            var rgbLength = UInt32(rgbData.count).bigEndian
-            var depthLength = UInt32(depthPNG.count).bigEndian
-            header.append(Data(bytes: &rgbLength, count: 4))
-            header.append(Data(bytes: &depthLength, count: 4))
+            var wideLength = UInt32(wideJPEG.count).bigEndian
+            var uwLength = UInt32(uwJPEG.count).bigEndian
+            header.append(Data(bytes: &wideLength, count: 4))
+            header.append(Data(bytes: &uwLength, count: 4))
 
-            return header + rgbData + depthPNG
+            return header + wideJPEG + uwJPEG
         }
     }
 }

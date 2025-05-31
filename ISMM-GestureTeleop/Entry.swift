@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct MyAppApp: App {
+struct MyGestureTeleopApp: App {
     var body: some Scene {
         WindowGroup {
             UIKitWrapperViewController()

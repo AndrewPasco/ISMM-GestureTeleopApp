@@ -5,117 +5,126 @@
 //  Created by Andrew Pasco on 29/05/25.
 //
 
-
 import AVFoundation
 import UIKit
 
-class CameraManager: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureDepthDataOutputDelegate {
-    private let session = AVCaptureSession()
-    private let videoOutput = AVCaptureVideoDataOutput()
-    private let depthOutput = AVCaptureDepthDataOutput()
+class CameraManager: NSObject {
+    private let session = AVCaptureMultiCamSession()
+    private let wideOutput = AVCaptureVideoDataOutput()
+    private let uwOutput = AVCaptureVideoDataOutput()
     private let queue = DispatchQueue(label: "cameraQueue")
 
-    var onFrameCaptured: ((CVPixelBuffer?, AVDepthData?) -> Void)?
-    private(set) var previewLayer: AVCaptureVideoPreviewLayer?
+    private var outputSynchronizer: AVCaptureDataOutputSynchronizer?
     
+    private var previewLayer: AVCaptureVideoPreviewLayer?
+    private var previewContainerView: UIView?
+
+    var onFrameCaptured: ((CVPixelBuffer, CVPixelBuffer) -> Void)?
     var debug: Bool = false
 
     func setup(previewIn view: UIView) {
-        session.beginConfiguration()
-        session.sessionPreset = .vga640x480
+        self.previewContainerView = view
 
-        guard let device = AVCaptureDevice.default(.builtInTrueDepthCamera, for: .video, position: .front),
-              let input = try? AVCaptureDeviceInput(device: device),
-              session.canAddInput(input) else {
-            print("Failed to access TrueDepth camera")
+        guard AVCaptureMultiCamSession.isMultiCamSupported else {
+            print("MultiCam is not supported on this device")
             return
         }
-        
-        // Fix framerate
-        do {
-            try device.lockForConfiguration()
-            device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: 10)
-            device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: 10)
-            device.unlockForConfiguration()
-        } catch {
-            print("[CameraManager] Failed to set frame rate: \(error.localizedDescription)")
-        }
-        
-        session.addInput(input)
 
-        videoOutput.setSampleBufferDelegate(self, queue: queue)
-        videoOutput.videoSettings = [
+        session.beginConfiguration()
+
+        // Configure wide camera
+        guard let wideDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
+              let wideInput = try? AVCaptureDeviceInput(device: wideDevice),
+              session.canAddInput(wideInput) else {
+            print("Failed to set up wide camera input")
+            return
+        }
+        session.addInput(wideInput)
+        
+        // Wide camera output
+        wideOutput.videoSettings = [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
         ]
-        session.addOutput(videoOutput)
+        guard session.canAddOutput(wideOutput) else {
+            print("Failed to add wide output")
+            return
+        }
+        session.addOutput(wideOutput)
 
-        if let videoConnection = videoOutput.connection(with: .video) {
-            videoConnection.isCameraIntrinsicMatrixDeliveryEnabled = true
+        // Configure ultra wide camera as second input
+        guard let ultraDevice = AVCaptureDevice.default(.builtInUltraWideCamera, for: .video, position: .back),
+              let ultraInput = try? AVCaptureDeviceInput(device: ultraDevice),
+              session.canAddInput(ultraInput) else {
+            print("Failed to set up ultra wide camera input")
+            return
         }
+        session.addInput(ultraInput)
 
-        if session.canAddOutput(depthOutput) {
-            session.addOutput(depthOutput)
+        // Ultra wide camera output
+        uwOutput.videoSettings = [
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
+        ]
+        guard session.canAddOutput(uwOutput) else {
+            print("Failed to add ultra wide output")
+            return
         }
-        depthOutput.setDelegate(self, callbackQueue: queue)
-        depthOutput.isFilteringEnabled = false // example has false "filtering depth data alters the data such that it may no longer be suitable for computer vision tasks"
-        if let connection = depthOutput.connection(with: .depthData) {
-            connection.isEnabled = true
-        } else {
-            print("No AVCaptureConnection")
-        }
-        
-        
+        session.addOutput(uwOutput)
+
+
+        // Synchronize outputs
+        outputSynchronizer = AVCaptureDataOutputSynchronizer(dataOutputs: [wideOutput, uwOutput])
+        outputSynchronizer?.setDelegate(self, queue: queue)
+
         session.commitConfiguration()
 
-        let preview = AVCaptureVideoPreviewLayer(session: session)
-        preview.videoGravity = .resizeAspectFill
-        preview.frame = view.bounds
-        view.layer.insertSublayer(preview, at: 0)
-        previewLayer = preview
+        // Add preview layer using wide camera's connection
+        if wideOutput.connection(with: .video) != nil {
+            let preview = AVCaptureVideoPreviewLayer(session: session)
+            preview.videoGravity = .resizeAspectFill
+            preview.frame = view.bounds
+            preview.borderColor = UIColor.red.cgColor
+            preview.borderWidth = 3
+            view.layer.insertSublayer(preview, at: 0)
+            previewLayer = preview
+        } else {
+            print("Failed to get wideOutput connection")
+        }
 
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.main.async {
             self.session.startRunning()
+            print("Camera Session Started")
         }
     }
 
-    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        if output == videoOutput, let rgbBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) {
-            
-            // Only print intrinsic matrix if debugging is enabled
-            if debug {
-                if let attachment = CMGetAttachment(sampleBuffer,
-                                                    key: kCMSampleBufferAttachmentKey_CameraIntrinsicMatrix,
-                                                    attachmentModeOut: nil) {
-                    let matrixData = attachment as! CFData
-                    var intrinsicMatrix = matrix_float3x3()
-                    CFDataGetBytes(matrixData,
-                                   CFRange(location: 0, length: MemoryLayout<matrix_float3x3>.size),
-                                   &intrinsicMatrix)
-
-                    print("RGB Camera Intrinsic Matrix:")
-                    print("[[\(intrinsicMatrix.columns.0.x), \(intrinsicMatrix.columns.1.x), \(intrinsicMatrix.columns.2.x)]")
-                    print(" [\(intrinsicMatrix.columns.0.y), \(intrinsicMatrix.columns.1.y), \(intrinsicMatrix.columns.2.y)]")
-                    print(" [\(intrinsicMatrix.columns.0.z), \(intrinsicMatrix.columns.1.z), \(intrinsicMatrix.columns.2.z)]]")
-                } else {
-                    print("No intrinsic matrix found in RGB sampleBuffer.")
-                }
-            }
-            
-            // Send Frame
-            onFrameCaptured?(rgbBuffer, nil)
-        }
-    }
-
-    func depthDataOutput(_ output: AVCaptureDepthDataOutput, didOutput depthData: AVDepthData, timestamp: CMTime, connection: AVCaptureConnection) {
-        onFrameCaptured?(nil, depthData)
-    }
-    
     func updatePreviewFrame() {
         DispatchQueue.main.async { [weak self] in
             guard let self = self,
                   let previewLayer = self.previewLayer,
-                  let superlayer = previewLayer.superlayer else { return }
-            previewLayer.frame = superlayer.bounds
+                  let containerView = self.previewContainerView else { return }
+            previewLayer.frame = containerView.bounds
         }
+    }
+}
+
+extension CameraManager: AVCaptureDataOutputSynchronizerDelegate {
+    func dataOutputSynchronizer(_ synchronizer: AVCaptureDataOutputSynchronizer,
+                                didOutput synchronizedDataCollection: AVCaptureSynchronizedDataCollection) {
+        guard let wideData = synchronizedDataCollection.synchronizedData(for: wideOutput) as? AVCaptureSynchronizedSampleBufferData,
+              let uwData = synchronizedDataCollection.synchronizedData(for: uwOutput) as? AVCaptureSynchronizedSampleBufferData,
+              !wideData.sampleBufferWasDropped,
+              !uwData.sampleBufferWasDropped else {
+            return
+        }
+
+        guard let wideBuffer = CMSampleBufferGetImageBuffer(wideData.sampleBuffer),
+              let uwBuffer = CMSampleBufferGetImageBuffer(uwData.sampleBuffer) else {
+            return
+        }
+
+        if debug {
+            print("Synchronized wide and ultrawide frames captured.")
+        }
+
+        onFrameCaptured?(wideBuffer, uwBuffer)
     }
 }

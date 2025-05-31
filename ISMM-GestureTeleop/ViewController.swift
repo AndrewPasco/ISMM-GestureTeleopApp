@@ -84,6 +84,7 @@ class ViewController: UIViewController {
         if appCoordinator == nil {
             appCoordinator = ISMMGestureTeleopApp(host: ip, port: 5000, previewView: self.view)
 
+            appCoordinator?.updatePreviewFrame()
             appCoordinator?.onConnectionStatusChange = { [weak self] status in
                 DispatchQueue.main.async {
                     self?.statusLabel.text = {
