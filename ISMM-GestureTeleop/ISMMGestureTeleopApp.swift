@@ -27,7 +27,7 @@ class ISMMGestureTeleopApp {
     init(host: String, port: Int, previewView: UIView) {
         tcpClient = TCPClient(host: host, port: port)
 
-        cameraManager.debug = false // Enable for camera matrix printout, frame matching verification
+        cameraManager.debug = true // Enable for camera matrix printout, frame matching verification
         cameraManager.onFrameCaptured = { [weak self] wide, uw in
             self?.handleFrames(wide: wide, uw: uw)
         }

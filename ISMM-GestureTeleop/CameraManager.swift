@@ -35,6 +35,13 @@ class CameraManager: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
             print("MultiCam is not supported on this device")
             return
         }
+        
+        if let dualCamera = AVCaptureDevice.default(.builtInDualCamera, for: .video, position: .back) {
+            print("Dual camera available: \(dualCamera.localizedName)")
+        } else {
+            print("No dual camera available on this device.")
+        }
+
 
         session.beginConfiguration()
 
@@ -165,7 +172,7 @@ class CameraManager: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         // Try to match frames
         if let wide = latestWideFrame, let uw = latestUWFrame {
             let delta = abs(CMTimeSubtract(wide.timestamp, uw.timestamp).seconds)
-            if delta < 0.015 { // Acceptable tolerance: 15ms
+            if delta < 0.02 { // Acceptable tolerance: 20ms
                 if debug {
                     print("[CameraManager] Matched frames — Δt = \(String(format: "%.3f", delta))s")
                 }
@@ -181,6 +188,7 @@ class CameraManager: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     }
     
     func resize(pixelBuffer: CVPixelBuffer, to size: CGSize) -> CVPixelBuffer? {
+        return pixelBuffer // for sending same as input
         let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
 
         let scaleX = size.width / CGFloat(CVPixelBufferGetWidth(pixelBuffer))
