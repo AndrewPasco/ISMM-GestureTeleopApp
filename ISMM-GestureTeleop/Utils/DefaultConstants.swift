@@ -30,6 +30,9 @@ struct DefaultConstants {
   static var minTrackingConfidence: Float = 0.3
   static let modelPath: String? = Bundle.main.path(forResource: "gesture_recognizer", ofType: "task")
   static let delegate: GestureRecognizerDelegate = .CPU
+    
+  static let PALM_INDICES = [0, 5, 9, 13, 17]
+  static let PREVIEW_DIMS = (WIDTH: 390, HEIGHT: 763)
 }
 
 // MARK: GestureRecognizerDelegate

@@ -19,6 +19,7 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        print("\(OpenCVWrapper.getOpenCVVersion())") // check opencv integration
         view.backgroundColor = .black
         setupUI()
     }
@@ -44,6 +45,7 @@ class ViewController: UIViewController {
 
         ipTextField.placeholder = "Enter IP Address"
         ipTextField.text = "172.16.170.224"  // Default IP
+        ipTextField.textAlignment = .center
         ipTextField.borderStyle = .roundedRect
         ipTextField.backgroundColor = .white
         ipTextField.keyboardType = .numbersAndPunctuation

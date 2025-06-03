@@ -7,8 +7,9 @@
 
 import UIKit
 
-class LandmarkOverlayView: UIView {
+class ResultOverlayView: UIView {
     var points: [CGPoint] = []
+    var gestureLabel: String? = nil
 
     override func draw(_ rect: CGRect) {
         guard let context = UIGraphicsGetCurrentContext() else { return }
@@ -47,10 +48,26 @@ class LandmarkOverlayView: UIView {
             context.setLineWidth(3.0)
             context.strokeEllipse(in: centroidRect)
         }
+        
+        // Draw gesture label at the top
+        if let gesture = gestureLabel {
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.alignment = .center
+
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 24, weight: .bold),
+                .foregroundColor: UIColor.green,
+                .paragraphStyle: paragraphStyle
+            ]
+
+            let textRect = CGRect(x: 0, y: 720, width: rect.width, height: 30)
+            gesture.draw(in: textRect, withAttributes: attributes)
+        }
     }
 
-    func updatePoints(_ newPoints: [CGPoint]) {
+    func updatePoints(_ newPoints: [CGPoint], gestureLabel gesture: String?) {
         self.points = newPoints
+        self.gestureLabel = gesture
         setNeedsDisplay()
     }
 }

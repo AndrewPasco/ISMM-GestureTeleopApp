@@ -113,7 +113,7 @@ class CameraManager: NSObject, AVCaptureDataOutputSynchronizerDelegate {
         }
 
         let depthFormats = videoDevice.activeFormat.supportedDepthDataFormats.filter {
-            CMFormatDescriptionGetMediaSubType($0.formatDescription) == kCVPixelFormatType_DepthFloat16
+            CMFormatDescriptionGetMediaSubType($0.formatDescription) == kCVPixelFormatType_DepthFloat32
         }
         
         if let selectedFormat = depthFormats.max(by: {
