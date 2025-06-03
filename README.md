@@ -9,3 +9,5 @@ Some files were adapted from MediaPipe example implementations. See LICENSE\_MP 
 ## Author
 
 Developed by Andrew Pasco (apascos@gmail.com) for gesture-based robot teleoperation research.
+
+Needs updating
