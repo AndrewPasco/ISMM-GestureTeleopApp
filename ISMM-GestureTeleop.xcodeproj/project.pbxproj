@@ -7,7 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7F5C4BC247E36E028A2B7543 /* Pods_ISMM_GestureTeleopTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C1BB29FAFC2FC8F35E1D65B /* Pods_ISMM_GestureTeleopTests.framework */; };
 		D4502D002DE87AD200AF8608 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = D4502CFF2DE87AD200AF8608 /* README.md */; };
+		D452BDA12DEDF5C000D3A519 /* LICENSE_MP in Resources */ = {isa = PBXBuildFile; fileRef = D452BDA02DEDF5C000D3A519 /* LICENSE_MP */; };
+		EEC1D5267E30558361B2D87F /* Pods_ISMM_GestureTeleop_ISMM_GestureTeleopUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 99C3772A7EAFD5A8C99AC0CE /* Pods_ISMM_GestureTeleop_ISMM_GestureTeleopUITests.framework */; };
+		F66433BB6C84609163B0D4D9 /* Pods_ISMM_GestureTeleop.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FD65F3C44911C6B6A0570210 /* Pods_ISMM_GestureTeleop.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -28,10 +32,20 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		461F39BD67A3A88103324649 /* Pods-ISMM-GestureTeleopTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ISMM-GestureTeleopTests.debug.xcconfig"; path = "Target Support Files/Pods-ISMM-GestureTeleopTests/Pods-ISMM-GestureTeleopTests.debug.xcconfig"; sourceTree = "<group>"; };
 		49744AE52DDE0A820087D862 /* ISMM-GestureTeleop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ISMM-GestureTeleop.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		49744AF22DDE0A860087D862 /* ISMM-GestureTeleopTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ISMM-GestureTeleopTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		49744AFC2DDE0A860087D862 /* ISMM-GestureTeleopUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ISMM-GestureTeleopUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		5C1BB29FAFC2FC8F35E1D65B /* Pods_ISMM_GestureTeleopTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ISMM_GestureTeleopTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		6A82BAD38B7AC0C50FD7DCEA /* Pods-ISMM-GestureTeleopTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ISMM-GestureTeleopTests.release.xcconfig"; path = "Target Support Files/Pods-ISMM-GestureTeleopTests/Pods-ISMM-GestureTeleopTests.release.xcconfig"; sourceTree = "<group>"; };
+		99C3772A7EAFD5A8C99AC0CE /* Pods_ISMM_GestureTeleop_ISMM_GestureTeleopUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ISMM_GestureTeleop_ISMM_GestureTeleopUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1C139244934A0E189E9AA60 /* Pods-ISMM-GestureTeleop-ISMM-GestureTeleopUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ISMM-GestureTeleop-ISMM-GestureTeleopUITests.release.xcconfig"; path = "Target Support Files/Pods-ISMM-GestureTeleop-ISMM-GestureTeleopUITests/Pods-ISMM-GestureTeleop-ISMM-GestureTeleopUITests.release.xcconfig"; sourceTree = "<group>"; };
+		CEC2B53FA4C63B24C8008B72 /* Pods-ISMM-GestureTeleop.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ISMM-GestureTeleop.release.xcconfig"; path = "Target Support Files/Pods-ISMM-GestureTeleop/Pods-ISMM-GestureTeleop.release.xcconfig"; sourceTree = "<group>"; };
 		D4502CFF2DE87AD200AF8608 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		D452BDA02DEDF5C000D3A519 /* LICENSE_MP */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE_MP; sourceTree = "<group>"; };
+		DB8459C44BADC8D8B7D1CFA1 /* Pods-ISMM-GestureTeleop-ISMM-GestureTeleopUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ISMM-GestureTeleop-ISMM-GestureTeleopUITests.debug.xcconfig"; path = "Target Support Files/Pods-ISMM-GestureTeleop-ISMM-GestureTeleopUITests/Pods-ISMM-GestureTeleop-ISMM-GestureTeleopUITests.debug.xcconfig"; sourceTree = "<group>"; };
+		E99D076246341AA68592AD02 /* Pods-ISMM-GestureTeleop.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ISMM-GestureTeleop.debug.xcconfig"; path = "Target Support Files/Pods-ISMM-GestureTeleop/Pods-ISMM-GestureTeleop.debug.xcconfig"; sourceTree = "<group>"; };
+		FD65F3C44911C6B6A0570210 /* Pods_ISMM_GestureTeleop.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ISMM_GestureTeleop.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -70,6 +84,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F66433BB6C84609163B0D4D9 /* Pods_ISMM_GestureTeleop.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -77,6 +92,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7F5C4BC247E36E028A2B7543 /* Pods_ISMM_GestureTeleopTests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -84,6 +100,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EEC1D5267E30558361B2D87F /* Pods_ISMM_GestureTeleop_ISMM_GestureTeleopUITests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -98,6 +115,9 @@
 				49744AFF2DDE0A860087D862 /* ISMM-GestureTeleopUITests */,
 				49744AE62DDE0A820087D862 /* Products */,
 				D4502CFF2DE87AD200AF8608 /* README.md */,
+				D452BDA02DEDF5C000D3A519 /* LICENSE_MP */,
+				E6B3102E5C62C519E4F1F0E7 /* Pods */,
+				EC316C4956E03B9A69F45748 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -111,6 +131,29 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		E6B3102E5C62C519E4F1F0E7 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				E99D076246341AA68592AD02 /* Pods-ISMM-GestureTeleop.debug.xcconfig */,
+				CEC2B53FA4C63B24C8008B72 /* Pods-ISMM-GestureTeleop.release.xcconfig */,
+				DB8459C44BADC8D8B7D1CFA1 /* Pods-ISMM-GestureTeleop-ISMM-GestureTeleopUITests.debug.xcconfig */,
+				A1C139244934A0E189E9AA60 /* Pods-ISMM-GestureTeleop-ISMM-GestureTeleopUITests.release.xcconfig */,
+				461F39BD67A3A88103324649 /* Pods-ISMM-GestureTeleopTests.debug.xcconfig */,
+				6A82BAD38B7AC0C50FD7DCEA /* Pods-ISMM-GestureTeleopTests.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		EC316C4956E03B9A69F45748 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				FD65F3C44911C6B6A0570210 /* Pods_ISMM_GestureTeleop.framework */,
+				99C3772A7EAFD5A8C99AC0CE /* Pods_ISMM_GestureTeleop_ISMM_GestureTeleopUITests.framework */,
+				5C1BB29FAFC2FC8F35E1D65B /* Pods_ISMM_GestureTeleopTests.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -118,6 +161,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 49744B062DDE0A860087D862 /* Build configuration list for PBXNativeTarget "ISMM-GestureTeleop" */;
 			buildPhases = (
+				DD0FCE1420D298F4175BF58E /* [CP] Check Pods Manifest.lock */,
 				49744AE12DDE0A820087D862 /* Sources */,
 				49744AE22DDE0A820087D862 /* Frameworks */,
 				49744AE32DDE0A820087D862 /* Resources */,
@@ -130,8 +174,6 @@
 				49744AE72DDE0A820087D862 /* ISMM-GestureTeleop */,
 			);
 			name = "ISMM-GestureTeleop";
-			packageProductDependencies = (
-			);
 			productName = "ISMM-GestureTeleop";
 			productReference = 49744AE52DDE0A820087D862 /* ISMM-GestureTeleop.app */;
 			productType = "com.apple.product-type.application";
@@ -140,6 +182,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 49744B092DDE0A860087D862 /* Build configuration list for PBXNativeTarget "ISMM-GestureTeleopTests" */;
 			buildPhases = (
+				845075B15FF94CD645509282 /* [CP] Check Pods Manifest.lock */,
 				49744AEE2DDE0A860087D862 /* Sources */,
 				49744AEF2DDE0A860087D862 /* Frameworks */,
 				49744AF02DDE0A860087D862 /* Resources */,
@@ -153,8 +196,6 @@
 				49744AF52DDE0A860087D862 /* ISMM-GestureTeleopTests */,
 			);
 			name = "ISMM-GestureTeleopTests";
-			packageProductDependencies = (
-			);
 			productName = "ISMM-GestureTeleopTests";
 			productReference = 49744AF22DDE0A860087D862 /* ISMM-GestureTeleopTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -163,6 +204,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 49744B0C2DDE0A860087D862 /* Build configuration list for PBXNativeTarget "ISMM-GestureTeleopUITests" */;
 			buildPhases = (
+				381C2848D4E2678754E5B63E /* [CP] Check Pods Manifest.lock */,
 				49744AF82DDE0A860087D862 /* Sources */,
 				49744AF92DDE0A860087D862 /* Frameworks */,
 				49744AFA2DDE0A860087D862 /* Resources */,
@@ -176,8 +218,6 @@
 				49744AFF2DDE0A860087D862 /* ISMM-GestureTeleopUITests */,
 			);
 			name = "ISMM-GestureTeleopUITests";
-			packageProductDependencies = (
-			);
 			productName = "ISMM-GestureTeleopUITests";
 			productReference = 49744AFC2DDE0A860087D862 /* ISMM-GestureTeleopUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
@@ -232,6 +272,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D452BDA12DEDF5C000D3A519 /* LICENSE_MP in Resources */,
 				D4502D002DE87AD200AF8608 /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -251,6 +292,75 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		381C2848D4E2678754E5B63E /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-ISMM-GestureTeleop-ISMM-GestureTeleopUITests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		845075B15FF94CD645509282 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-ISMM-GestureTeleopTests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		DD0FCE1420D298F4175BF58E /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-ISMM-GestureTeleop-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		49744AE12DDE0A820087D862 /* Sources */ = {
@@ -417,6 +527,7 @@
 		};
 		49744B072DDE0A860087D862 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = E99D076246341AA68592AD02 /* Pods-ISMM-GestureTeleop.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -450,6 +561,7 @@
 		};
 		49744B082DDE0A860087D862 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = CEC2B53FA4C63B24C8008B72 /* Pods-ISMM-GestureTeleop.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -483,6 +595,7 @@
 		};
 		49744B0A2DDE0A860087D862 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 461F39BD67A3A88103324649 /* Pods-ISMM-GestureTeleopTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
@@ -502,6 +615,7 @@
 		};
 		49744B0B2DDE0A860087D862 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 6A82BAD38B7AC0C50FD7DCEA /* Pods-ISMM-GestureTeleopTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
@@ -521,6 +635,7 @@
 		};
 		49744B0D2DDE0A860087D862 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = DB8459C44BADC8D8B7D1CFA1 /* Pods-ISMM-GestureTeleop-ISMM-GestureTeleopUITests.debug.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -538,6 +653,7 @@
 		};
 		49744B0E2DDE0A860087D862 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A1C139244934A0E189E9AA60 /* Pods-ISMM-GestureTeleop-ISMM-GestureTeleopUITests.release.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;

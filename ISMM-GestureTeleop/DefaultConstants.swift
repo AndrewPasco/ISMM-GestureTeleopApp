@@ -26,8 +26,8 @@ struct DefaultConstants {
   static let lineColor = UIColor(red: 0, green: 127/255.0, blue: 139/255.0, alpha: 1)
 
   static var minHandDetectionConfidence: Float = 0.5
-  static var minHandPresenceConfidence: Float = 0.5
-  static var minTrackingConfidence: Float = 0.5
+  static var minHandPresenceConfidence: Float = 0.3
+  static var minTrackingConfidence: Float = 0.3
   static let modelPath: String? = Bundle.main.path(forResource: "gesture_recognizer", ofType: "task")
   static let delegate: GestureRecognizerDelegate = .CPU
 }

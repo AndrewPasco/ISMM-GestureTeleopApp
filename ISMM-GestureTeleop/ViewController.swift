@@ -14,6 +14,8 @@ class ViewController: UIViewController {
     private let statusLabel = UILabel()
     private let ipTextField = UITextField()
     private let connectButton = UIButton(type: .system)
+    
+    private let previewContainerView = UIView()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -23,10 +25,13 @@ class ViewController: UIViewController {
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        appCoordinator?.updatePreviewFrame()
+        appCoordinator?.getPreviewLayer()?.frame = previewContainerView.bounds
     }
 
     private func setupUI() {
+        previewContainerView.translatesAutoresizingMaskIntoConstraints = false
+        view.insertSubview(previewContainerView, at: 0)
+        
         statusLabel.text = "Not Connected"
         statusLabel.textColor = .white
         statusLabel.backgroundColor = UIColor.black.withAlphaComponent(0.6)
@@ -38,7 +43,7 @@ class ViewController: UIViewController {
         view.addSubview(statusLabel)
 
         ipTextField.placeholder = "Enter IP Address"
-        ipTextField.text = "172.16.168.48"  // Default IP
+        ipTextField.text = "172.16.170.224"  // Default IP
         ipTextField.borderStyle = .roundedRect
         ipTextField.backgroundColor = .white
         ipTextField.keyboardType = .numbersAndPunctuation
@@ -54,8 +59,13 @@ class ViewController: UIViewController {
         connectButton.translatesAutoresizingMaskIntoConstraints = false
         connectButton.addTarget(self, action: #selector(connectButtonTapped), for: .touchUpInside)
         view.addSubview(connectButton)
-
+        
         NSLayoutConstraint.activate([
+            previewContainerView.topAnchor.constraint(equalTo: view.topAnchor),
+            previewContainerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            previewContainerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            previewContainerView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            
             ipTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
             ipTextField.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             ipTextField.widthAnchor.constraint(equalToConstant: 200),
@@ -84,7 +94,13 @@ class ViewController: UIViewController {
         if appCoordinator == nil {
             appCoordinator = ISMMGestureTeleopApp(host: ip, port: 5000, previewView: self.view)
 
-            appCoordinator?.updatePreviewFrame()
+            // Insert preview layer from cameraManager
+            if let previewLayer = appCoordinator?.getPreviewLayer() {
+                previewLayer.frame = previewContainerView.bounds
+                previewLayer.videoGravity = .resizeAspectFill
+                previewContainerView.layer.insertSublayer(previewLayer, at: 0)
+            }
+            
             appCoordinator?.onConnectionStatusChange = { [weak self] status in
                 DispatchQueue.main.async {
                     self?.statusLabel.text = {
