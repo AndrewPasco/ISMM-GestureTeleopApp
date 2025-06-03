@@ -15,8 +15,6 @@ import Accelerate
 class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
     private let tcpClient: TCPClient
     
-    private let frameEncoder = FrameEncoder()
-    
     private let cameraManager = CameraManager()
     
     private let sendingQueue = DispatchQueue(label: "sendingQueue")
