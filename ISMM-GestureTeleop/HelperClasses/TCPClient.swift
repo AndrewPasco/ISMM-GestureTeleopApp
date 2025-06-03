@@ -51,6 +51,11 @@ class TCPClient: NSObject, StreamDelegate {
     }
 
     func send(data: Data) {
+        guard !data.isEmpty else {
+            print("Attempted to send empty data")
+            return
+        }
+        
         guard let stream = outputStream else { return }
         data.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) in
             var bytesRemaining = data.count

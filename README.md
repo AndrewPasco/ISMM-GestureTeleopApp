@@ -32,7 +32,7 @@ Make sure MediaPipeTasksVision and any other required frameworks are linked.
 
 3. **Build and run on a real device** — depth capture is not available in the simulator.
 
-### App Structure
+## App Structure
 - ISMMGestureTeleopApp: Main coordinator handling camera capture, gesture recognition, depth data processing, and TCP streaming.
 - CameraManager: Manages synchronized RGB and depth capture using AVCaptureMultiCamSession.
 - TCPClient: Handles low-level TCP socket communication.
@@ -65,6 +65,7 @@ Adjust constants (such as the model path and gesture confidence thresholds) in t
 
 - Add camera switching support (e.g., LiDAR vs TrueDepth).
 - Enhance gesture filtering and prediction smoothing.
+- Consider removing OpenCV framework (not currently used due to plane-normal approach)
 
 ## License
 

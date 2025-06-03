@@ -25,6 +25,8 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
     private let cacheQueue = DispatchQueue(label: "frameCacheQueue")
     
     private let resultUIView = ResultOverlayView()
+    
+    var previousNormal: SIMD3<Double>? = nil
 
     var onConnectionStatusChange: ((ConnectionStatus) -> Void)? {
         didSet { tcpClient.onStatusChange = onConnectionStatusChange }
@@ -117,45 +119,34 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
             frameDataCache.removeValue(forKey: timestamp) // Remove old data to prevent memory growths
         }
         
-        // Print frame intrinsics
-            if let matrix = matchedFrameData?.intrinsicMatrix {
-            print("Intrinsic Matrix:")
-            print("[[\(matrix.columns.0.x), \(matrix.columns.1.x), \(matrix.columns.2.x)]")
-            print(" [\(matrix.columns.0.y), \(matrix.columns.1.y), \(matrix.columns.2.y)]")
-            print(" [\(matrix.columns.0.z), \(matrix.columns.1.z), \(matrix.columns.2.z)]]")
-        } else { print("No intrinsic matrix found") }
+//        // Print frame intrinsics
+//            if let matrix = matchedFrameData?.intrinsicMatrix {
+//            print("Intrinsic Matrix:")
+//            print("[[\(matrix.columns.0.x), \(matrix.columns.1.x), \(matrix.columns.2.x)]")
+//            print(" [\(matrix.columns.0.y), \(matrix.columns.1.y), \(matrix.columns.2.y)]")
+//            print(" [\(matrix.columns.0.z), \(matrix.columns.1.z), \(matrix.columns.2.z)]]")
+//        } else { print("No intrinsic matrix found") }
             
-        // Print Timestamp and Top Gesture
-        print("Timestamp: \(timestamp) ms")
-
-        if let gestureCategories = result.gestures.first {
-            print("Recognized Gestures:")
-            for gesture in gestureCategories {
-                if let name = gesture.categoryName {
-                    print("- \(name): \(gesture.score)")
-                } else {
-                    print("- <unknown gesture>: \(gesture.score)")
-                }
-            }
-        } else {
-            print("Gesture: None")
+//        // Print Timestamp and Top Gesture
+//        print("Timestamp: \(timestamp) ms")
+//
+        guard let recognizedGesture = result.gestures.first?[0].categoryName else {
+            return
         }
-
-        // Further Processing of gesture?
             
         // Passing for landmark drawing
         drawLandmarks(result: result)
             
         // Compute wrist pose
-        let newPose = computePose(result: result, frameData: matchedFrameData)
+        guard let newPose = computePose(result: result, frameData: matchedFrameData) else {
+            print("Pose compute failure")
+            return
+        }
             
-//        for i in 0..<4 {
-//            let row = [newPose?.columns.0[i], newPose?.columns.1[i], newPose?.columns.2[i], newPose?.columns.3[i]]
-//            print(row.map { String(format: "%.3f", $0!) }.joined(separator: "\t"))
-//        }
+        sendGestureAndPose(gesture: recognizedGesture, pose: newPose)
     }
     
-    private func computePose(result: GestureRecognizerResult, frameData: FrameMetadata?) -> simd_double4x4? {
+    private func computePose(result: GestureRecognizerResult, frameData: FrameMetadata?) -> (translation: simd_double3, quat: simd_quatd)? {
         // Unwrap depth map and verify it is float32 buffer
         guard let depthMap = frameData?.depthData.depthDataMap else { return nil }
         let format = CVPixelBufferGetPixelFormatType(depthMap)
@@ -219,24 +210,20 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
             print("Plane fitting failed")
             return nil
         }
-        
-        // 3×3 rotation matrix from quaternion
-        let R = double3x3(palmNormal)
 
-        // Build a 4×4 Pose
-        var pose = matrix_identity_double4x4
-
-        // Set rotation part
-        pose.columns.0 = SIMD4<Double>(R.columns.0, 0)
-        pose.columns.1 = SIMD4<Double>(R.columns.1, 0)
-        pose.columns.2 = SIMD4<Double>(R.columns.2, 0)
-
-        // Set translation (centroid)
-        pose.columns.3 = SIMD4<Double>(palmCentroid, 1)
-
-        return pose
+        return (palmCentroid, palmNormal)
     }
 
+    private func sendGestureAndPose(gesture: String, pose: (translation: simd_double3, quat: simd_quatd)) {
+        let poseData = String(format: "%@ %.6f %.6f %.6f %.6f %.6f %.6f %.6f\n", gesture,
+                              pose.translation.x, pose.translation.y, pose.translation.z,
+                              pose.quat.vector.w, pose.quat.vector.x, pose.quat.vector.y, pose.quat.vector.z)
+        
+        if let dataToSend = poseData.data(using: .utf8) {
+            tcpClient.send(data: dataToSend)
+        }
+    }
+    
     private func drawLandmarks(result: GestureRecognizerResult) {
         guard let handLandmarks = result.landmarks.first else {
             print("No hand landmarks detected.")
@@ -311,18 +298,18 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
         let N = points.count
         guard N >= 3 else { return nil }
 
-        // 1. Compute the centroid
+        // Compute the centroid
         let sum = points.reduce(SIMD3<Double>(repeating: 0), +)
         let centroid = sum / Double(N)
 
-        // 2. Center the points
+        // Center the points
         let centered = points.map { $0 - centroid }
 
-        // 3. Build 3xN matrix for SVD
+        // Build 3xN matrix for SVD
         // Column-major: X, Y, Z rows — N columns
-        var matrix = centered.flatMap { [$0.x, $0.y, $0.z] }
+        let matrix = centered.flatMap { [$0.x, $0.y, $0.z] }
 
-        // 4. Compute covariance matrix: 3x3
+        // Compute covariance matrix: 3x3
         var covMatrix = [Double](repeating: 0, count: 9) // row-major
         vDSP_mmulD(matrix, 1,
                    matrix, 1,
@@ -332,7 +319,7 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
         let scale = 1.0 / Double(N - 1)
         vDSP_vsmulD(covMatrix, 1, [scale], &covMatrix, 1, 9)
 
-        // 5. Eigen decomposition of covariance matrix
+        // Eigen decomposition of covariance matrix
         var jobz: Int8 = 86 // 'V'
         var uplo: Int8 = 85 // 'U'
         var n: Int32 = 3
@@ -350,16 +337,29 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
             return nil
         }
 
-        // 6. Extract normal (eigenvector with smallest eigenvalue)
+        // Extract normal (eigenvector with smallest eigenvalue)
         // Columns of covMatrixCopy are eigenvectors in row-major
         let minIndex = eigenvalues.firstIndex(of: eigenvalues.min()!)!
         let normal = SIMD3<Double>(covMatrixCopy[minIndex],
                                    covMatrixCopy[minIndex + 3],
                                    covMatrixCopy[minIndex + 6])
 
-        let normalizedNormal = simd_normalize(normal)
+        var normalizedNormal = simd_normalize(normal)
+        
+        // Flip to match previous direction
+        if let prev = previousNormal, simd_dot(prev, normalizedNormal) < 0 {
+            normalizedNormal = -normalizedNormal
+        }
 
-        // 7. Create orientation quaternion where +Z aligns with normal
+        // Apply exponential smoothing
+        if let prev = previousNormal {
+            normalizedNormal = simd_normalize(DefaultConstants.SMOOTHING_ALPHA * prev + (1 - DefaultConstants.SMOOTHING_ALPHA) * normalizedNormal)
+        }
+
+        // Store for next time (assumes external storage)
+        previousNormal = normalizedNormal
+
+        // Create orientation quaternion where +Z aligns with normal
         let zAxis = SIMD3<Double>(0, 0, 1)
         let rotation = simd_quaternion(zAxis, normalizedNormal)
 

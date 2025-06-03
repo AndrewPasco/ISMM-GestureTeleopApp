@@ -34,6 +34,7 @@ struct DefaultConstants {
     
   static let PALM_INDICES = [0, 5, 9, 13, 17]
   static let PREVIEW_DIMS = (WIDTH: 390, HEIGHT: 763)
+  static let SMOOTHING_ALPHA = 0.8
 }
 
 // MARK: GestureRecognizerDelegate
