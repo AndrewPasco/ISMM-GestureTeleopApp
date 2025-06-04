@@ -25,8 +25,6 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
     private let cacheQueue = DispatchQueue(label: "frameCacheQueue")
     
     private let resultUIView = ResultOverlayView()
-    
-    var previousNormal: SIMD3<Double>? = nil
 
     var onConnectionStatusChange: ((ConnectionStatus) -> Void)? {
         didSet { tcpClient.onStatusChange = onConnectionStatusChange }
@@ -36,6 +34,7 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
         // Create TCPClient for sending to Remote
         tcpClient = TCPClient(host: host, port: port)
         super.init()
+        
         // Create Gesture Recognizer Service and Result Handler
         let options = createGestureRecognizerOptions()
         
@@ -72,7 +71,7 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
 
     private func handleFrame(sampleBuffer: CMSampleBuffer, depthData: AVDepthData) {
         let timestampMillis = Int(CMSampleBufferGetPresentationTimeStamp(sampleBuffer).seconds * 1000)
-        let frameIntrinsics = getIntrinsics(from: sampleBuffer)
+        let frameIntrinsics = getFrameIntrinsics(from: sampleBuffer)
         
         let metadata = FrameMetadata(
             depthData: depthData,
@@ -119,112 +118,40 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
             frameDataCache.removeValue(forKey: timestamp) // Remove old data to prevent memory growths
         }
         
-//        // Print frame intrinsics
-//            if let matrix = matchedFrameData?.intrinsicMatrix {
-//            print("Intrinsic Matrix:")
-//            print("[[\(matrix.columns.0.x), \(matrix.columns.1.x), \(matrix.columns.2.x)]")
-//            print(" [\(matrix.columns.0.y), \(matrix.columns.1.y), \(matrix.columns.2.y)]")
-//            print(" [\(matrix.columns.0.z), \(matrix.columns.1.z), \(matrix.columns.2.z)]]")
-//        } else { print("No intrinsic matrix found") }
+        guard let K = matchedFrameData?.intrinsicMatrix else {
+            return
+        }
             
-//        // Print Timestamp and Top Gesture
-//        print("Timestamp: \(timestamp) ms")
-//
         guard let recognizedGesture = result.gestures.first?[0].categoryName else {
             return
         }
             
-        // Passing for landmark drawing
-        drawLandmarks(result: result)
-            
         // Compute wrist pose
-        guard let newPose = computePose(result: result, frameData: matchedFrameData) else {
+        guard let newPose = PoseEstimator.computePose(result: result, frameData: matchedFrameData) else {
             print("Pose compute failure")
             return
         }
             
+        // Passing for landmark drawing
+        updateHandPreview(result: result, pose: newPose, intrinsics: K)
+            
         sendGestureAndPose(gesture: recognizedGesture, pose: newPose)
     }
-    
-    private func computePose(result: GestureRecognizerResult, frameData: FrameMetadata?) -> (translation: simd_double3, quat: simd_quatd)? {
-        // Unwrap depth map and verify it is float32 buffer
-        guard let depthMap = frameData?.depthData.depthDataMap else { return nil }
-        let format = CVPixelBufferGetPixelFormatType(depthMap)
-        guard format == kCVPixelFormatType_DepthFloat32 else {
-            print("Unsupported pixel format: \(format)")
-            return nil
-        }
-        // get depth resolution
-        let imageSize = CGSize(width: CVPixelBufferGetWidth(depthMap), height: CVPixelBufferGetHeight(depthMap))
 
-        // get handLandmarks and handWorldLandmarks
-        guard let handLandmarks = result.landmarks.first else {
-            print("No hand landmarks detected.")
-            return nil
-        }
+    private func sendGestureAndPose(gesture: String, pose: (translation: simd_double3, rot: matrix_double3x3)) {
+        // Transform to quat for sending
+        let quat = simd_quaternion(pose.rot)
         
-        // Get orientations and centroid position from normal approach
-        CVPixelBufferLockBaseAddress(depthMap, .readOnly)
-        defer { CVPixelBufferUnlockBaseAddress(depthMap, .readOnly) }
-
-        let rowBytes = CVPixelBufferGetBytesPerRow(depthMap)
-        let baseAddress = CVPixelBufferGetBaseAddress(depthMap)!
-
-        let buffer = baseAddress.assumingMemoryBound(to: Float32.self)
-        
-        guard let K = frameData?.intrinsicMatrix else { return nil }
-
-        let fx = K[0][0]
-        let fy = K[1][1]
-        let cx = K[2][0]
-        let cy = K[2][1]
-        
-        var palmPoints3D: [simd_double3] = []
-
-        for index in DefaultConstants.PALM_INDICES {
-            let lm = handLandmarks[index]
-            let pixelX = CGFloat(lm.x) * imageSize.width
-            let pixelY = CGFloat(lm.y) * imageSize.height
-
-            let row = Int(pixelY)
-            let col = Int(pixelX)
-            let index = row * (rowBytes / MemoryLayout<Float32>.size) + col
-            let depth = buffer[index]
-
-            // Skip invalid or missing depth values
-            if depth.isNaN || depth <= 0.0 { continue }
-
-            let x = Double((Float(pixelX) - cx) * depth / fx)
-            let y = Double((Float(pixelY) - cy) * depth / fy)
-            let z = Double(depth)
-
-            palmPoints3D.append(simd_double3(x, y, z))
-        }
-        
-        guard palmPoints3D.count >= 3 else {
-            print("Not enough valid palm points for plane fitting.")
-            return nil
-        }
-
-        guard let (palmCentroid, palmNormal) = fitPlaneSVD(points: palmPoints3D) else {
-            print("Plane fitting failed")
-            return nil
-        }
-
-        return (palmCentroid, palmNormal)
-    }
-
-    private func sendGestureAndPose(gesture: String, pose: (translation: simd_double3, quat: simd_quatd)) {
         let poseData = String(format: "%@ %.6f %.6f %.6f %.6f %.6f %.6f %.6f\n", gesture,
                               pose.translation.x, pose.translation.y, pose.translation.z,
-                              pose.quat.vector.w, pose.quat.vector.x, pose.quat.vector.y, pose.quat.vector.z)
+                              quat.vector.w, quat.vector.x, quat.vector.y, quat.vector.z)
         
         if let dataToSend = poseData.data(using: .utf8) {
             tcpClient.send(data: dataToSend)
         }
     }
     
-    private func drawLandmarks(result: GestureRecognizerResult) {
+    private func updateHandPreview(result: GestureRecognizerResult, pose: (translation: simd_double3, rot: matrix_double3x3), intrinsics: matrix_float3x3) {
         guard let handLandmarks = result.landmarks.first else {
             print("No hand landmarks detected.")
             return
@@ -248,14 +175,14 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
                 pointsToDraw.append(viewPoint)
             }
         }
-            
+        
         // Update overlay view on main thread
         DispatchQueue.main.async {
-            self.resultUIView.updatePoints(pointsToDraw, gestureLabel: gestureResult)
+            self.resultUIView.update(points: pointsToDraw, gestureLabel: gestureResult, centroid3D: pose.translation, axes3D: pose.rot, intrinsics: intrinsics)
         }
     }
     
-    func getIntrinsics(from sampleBuffer: CMSampleBuffer) -> matrix_float3x3? {
+    func getFrameIntrinsics(from sampleBuffer: CMSampleBuffer) -> matrix_float3x3? {
         guard let attachment = CMGetAttachment(
             sampleBuffer,
             key: kCMSampleBufferAttachmentKey_CameraIntrinsicMatrix,
@@ -280,7 +207,6 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
     func getPreviewLayer() -> AVCaptureVideoPreviewLayer? {
         return cameraManager.previewLayer
     }
-
     
     private func createGestureRecognizerOptions() -> GestureRecognizerOptions {
         let options = GestureRecognizerOptions()
@@ -292,78 +218,6 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
         options.numHands = 1
         options.gestureRecognizerLiveStreamDelegate = self
         return options
-    }
-
-    func fitPlaneSVD(points: [SIMD3<Double>]) -> (centroid: SIMD3<Double>, normalQuat: simd_quatd)? {
-        let N = points.count
-        guard N >= 3 else { return nil }
-
-        // Compute the centroid
-        let sum = points.reduce(SIMD3<Double>(repeating: 0), +)
-        let centroid = sum / Double(N)
-
-        // Center the points
-        let centered = points.map { $0 - centroid }
-
-        // Build 3xN matrix for SVD
-        // Column-major: X, Y, Z rows — N columns
-        let matrix = centered.flatMap { [$0.x, $0.y, $0.z] }
-
-        // Compute covariance matrix: 3x3
-        var covMatrix = [Double](repeating: 0, count: 9) // row-major
-        vDSP_mmulD(matrix, 1,
-                   matrix, 1,
-                   &covMatrix, 1,
-                   3, 3, vDSP_Length(N))
-
-        let scale = 1.0 / Double(N - 1)
-        vDSP_vsmulD(covMatrix, 1, [scale], &covMatrix, 1, 9)
-
-        // Eigen decomposition of covariance matrix
-        var jobz: Int8 = 86 // 'V'
-        var uplo: Int8 = 85 // 'U'
-        var n: Int32 = 3
-        var lda: Int32 = 3
-        var info: Int32 = 0
-        var eigenvalues = [Double](repeating: 0, count: 3)
-        var covMatrixCopy = covMatrix // dsyev modifies in-place
-        var work = [Double](repeating: 0, count: 15 * 3)
-        var lwork = Int32(work.count)
-
-        dsyev_(&jobz, &uplo, &n, &covMatrixCopy, &lda, &eigenvalues, &work, &lwork, &info)
-
-        if info != 0 {
-            print("Eigen decomposition failed.")
-            return nil
-        }
-
-        // Extract normal (eigenvector with smallest eigenvalue)
-        // Columns of covMatrixCopy are eigenvectors in row-major
-        let minIndex = eigenvalues.firstIndex(of: eigenvalues.min()!)!
-        let normal = SIMD3<Double>(covMatrixCopy[minIndex],
-                                   covMatrixCopy[minIndex + 3],
-                                   covMatrixCopy[minIndex + 6])
-
-        var normalizedNormal = simd_normalize(normal)
-        
-        // Flip to match previous direction
-        if let prev = previousNormal, simd_dot(prev, normalizedNormal) < 0 {
-            normalizedNormal = -normalizedNormal
-        }
-
-        // Apply exponential smoothing
-        if let prev = previousNormal {
-            normalizedNormal = simd_normalize(DefaultConstants.SMOOTHING_ALPHA * prev + (1 - DefaultConstants.SMOOTHING_ALPHA) * normalizedNormal)
-        }
-
-        // Store for next time (assumes external storage)
-        previousNormal = normalizedNormal
-
-        // Create orientation quaternion where +Z aligns with normal
-        let zAxis = SIMD3<Double>(0, 0, 1)
-        let rotation = simd_quaternion(zAxis, normalizedNormal)
-
-        return (centroid, rotation)
     }
 }
 

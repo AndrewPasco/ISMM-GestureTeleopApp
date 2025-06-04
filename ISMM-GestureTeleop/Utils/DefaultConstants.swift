@@ -19,22 +19,21 @@ import MediaPipeTasksVision
 
 // MARK: Define default constants
 struct DefaultConstants {
+    static let lineWidth: CGFloat = 2
+    static let pointRadius: CGFloat = 5
+    static let pointColor = UIColor.yellow
+    static let pointFillColor = UIColor.red
+    static let lineColor = UIColor(red: 0, green: 127/255.0, blue: 139/255.0, alpha: 1)
 
-  static let lineWidth: CGFloat = 2
-  static let pointRadius: CGFloat = 5
-  static let pointColor = UIColor.yellow
-  static let pointFillColor = UIColor.red
-  static let lineColor = UIColor(red: 0, green: 127/255.0, blue: 139/255.0, alpha: 1)
+    static var minHandDetectionConfidence: Float = 0.5
+    static var minHandPresenceConfidence: Float = 0.3
+    static var minTrackingConfidence: Float = 0.3
+    static let modelPath: String? = Bundle.main.path(forResource: "gesture_recognizer", ofType: "task")
+    static let delegate: GestureRecognizerDelegate = .CPU
 
-  static var minHandDetectionConfidence: Float = 0.5
-  static var minHandPresenceConfidence: Float = 0.3
-  static var minTrackingConfidence: Float = 0.3
-  static let modelPath: String? = Bundle.main.path(forResource: "gesture_recognizer", ofType: "task")
-  static let delegate: GestureRecognizerDelegate = .CPU
-    
-  static let PALM_INDICES = [0, 5, 9, 13, 17]
-  static let PREVIEW_DIMS = (WIDTH: 390, HEIGHT: 763)
-  static let SMOOTHING_ALPHA = 0.8
+    static let PALM_INDICES = [0, 1, 5, 9, 13, 17]
+    static let PREVIEW_DIMS = (WIDTH: 390, HEIGHT: 763)
+    static let IMAGE_DIMS = (WIDTH: 1920.0, HEIGHT: 1080.0)
 }
 
 // MARK: GestureRecognizerDelegate

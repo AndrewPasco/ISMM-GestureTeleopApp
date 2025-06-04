@@ -44,7 +44,7 @@ class ViewController: UIViewController {
         view.addSubview(statusLabel)
 
         ipTextField.placeholder = "Enter IP Address"
-        ipTextField.text = "172.16.170.224"  // Default IP
+        ipTextField.text = "10.228.13.158"  // Default IP
         ipTextField.textAlignment = .center
         ipTextField.borderStyle = .roundedRect
         ipTextField.backgroundColor = .white
