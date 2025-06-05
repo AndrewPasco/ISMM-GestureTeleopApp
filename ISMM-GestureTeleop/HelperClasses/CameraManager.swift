@@ -169,6 +169,12 @@ class CameraManager: NSObject, AVCaptureDataOutputSynchronizerDelegate {
         }
 
         if syncedDepthData.depthDataWasDropped || syncedVideoData.sampleBufferWasDropped {
+            if syncedDepthData.depthDataWasDropped {
+                print("Depth data was dropped")
+            }
+            if syncedVideoData.sampleBufferWasDropped {
+                print("Video sample buffer was dropped")
+            }
             return
         }
 
@@ -176,7 +182,9 @@ class CameraManager: NSObject, AVCaptureDataOutputSynchronizerDelegate {
         let sampleBuffer = syncedVideoData.sampleBuffer
 
         // Trigger callback
-        onFrameCaptured?(sampleBuffer, depthData)
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.onFrameCaptured?(sampleBuffer, depthData)
+        }
     }
 
 
@@ -198,3 +206,16 @@ class CameraManager: NSObject, AVCaptureDataOutputSynchronizerDelegate {
         }
     }
 }
+
+extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        print("Raw video frame received: \(CMSampleBufferGetPresentationTimeStamp(sampleBuffer).seconds)")
+    }
+}
+
+extension CameraManager: AVCaptureDepthDataOutputDelegate {
+    func depthDataOutput(_ output: AVCaptureDepthDataOutput, didOutput depthData: AVDepthData, timestamp: CMTime, connection: AVCaptureConnection) {
+        print("Raw depth data received: \(timestamp.seconds)")
+    }
+}
+

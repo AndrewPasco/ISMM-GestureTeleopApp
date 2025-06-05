@@ -32,7 +32,7 @@ struct DefaultConstants {
     static let delegate: GestureRecognizerDelegate = .CPU
 
     static let PALM_INDICES = [0, 1, 5, 9, 13, 17]
-    static let PREVIEW_DIMS = (WIDTH: 390, HEIGHT: 763)
+    static let PREVIEW_DIMS = (WIDTH: 390, HEIGHT: 763) // should probably be grabbing these from device config
     static let IMAGE_DIMS = (WIDTH: 1920.0, HEIGHT: 1080.0)
 }
 

@@ -1,5 +1,5 @@
 //
-//  and.swift
+//  GestureRecognizerResultDelegate.swift
 //  ISMM-GestureTeleop
 //
 //  Created by Andrew Pasco on 02/06/25.
@@ -10,7 +10,8 @@ import MediaPipeTasksVision
 // Class that conforms to the `GestureRecognizerLiveStreamDelegate` protocol and
 // implements the method that the gesture recognizer calls once it finishes
 // performing recognizing hand gestures in each input frame.
-class GestureRecognizerResultProcessor: NSObject, GestureRecognizerLiveStreamDelegate {
+// Simply return the result back to the main class, necessary given multiple recognizer instances
+class GestureRecognizerResultDelegate: NSObject, GestureRecognizerLiveStreamDelegate {
     var onGestureResult: ((GestureRecognizerResult, Int) -> Void)?
 
     func gestureRecognizer(

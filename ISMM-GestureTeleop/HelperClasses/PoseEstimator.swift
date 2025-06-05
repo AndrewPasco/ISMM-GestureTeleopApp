@@ -13,8 +13,8 @@ import MediaPipeTasksVision
 class PoseEstimator {
     static func computePose(
         result: GestureRecognizerResult,
-        frameData: FrameMetadata?
-    ) -> (translation: simd_double3, rot: matrix_double3x3)? {
+        frameData: FrameData?
+    ) -> Pose? {
         guard let depthMap = frameData?.depthData.depthDataMap else { return nil }
         let format = CVPixelBufferGetPixelFormatType(depthMap)
         guard format == kCVPixelFormatType_DepthFloat32 else {
@@ -35,9 +35,13 @@ class PoseEstimator {
         let rowBytes = CVPixelBufferGetBytesPerRow(depthMap)
         let baseAddress = CVPixelBufferGetBaseAddress(depthMap)!
         let buffer = baseAddress.assumingMemoryBound(to: Float32.self)
+        
+        guard let rgbData = frameData?.rgbData else { return nil }
 
-        guard let K = frameData?.intrinsicMatrix else { return nil }
-
+        guard let K = ISMMGestureTeleopApp.getFrameIntrinsics(from: rgbData) else {
+            return nil
+        }
+        
         let fx = K[0][0]
         let fy = K[1][1]
         let cx = K[2][0]
@@ -73,7 +77,7 @@ class PoseEstimator {
         return pointsToPose(points: palmPoints3D)
     }
 
-    static func pointsToPose(points: [simd_double3]) -> (translation: simd_double3, rot: matrix_double3x3)? {
+    static func pointsToPose(points: [simd_double3]) -> Pose? {
         let N = points.count
         guard N >= 3 else { return nil }
 
@@ -86,11 +90,18 @@ class PoseEstimator {
 
         let zAxis = simd_normalize(normal)
         var xAxis = simd_normalize(points[0] - centroid)
-        xAxis = simd_normalize(xAxis - simd_dot(xAxis, zAxis) * zAxis)
+        
+        // get component of xaxis in x-y plane
+        // determine how to rotate
+        
+        xAxis = simd_normalize(xAxis - simd_dot(xAxis, zAxis) * zAxis) // gram-schmidt
         let yAxis = simd_normalize(simd_cross(zAxis, xAxis))
 
         let rotationMatrix = matrix_double3x3(columns: (xAxis, yAxis, zAxis))
-        return (centroid, rotationMatrix)
+        
+        let pose = Pose(translation: centroid, rot:rotationMatrix)
+        
+        return pose
     }
 
     static func bestPlaneNormal(from points: [simd_double3],
@@ -138,4 +149,9 @@ struct Plane {
     func distance(to point: simd_double3) -> Double {
         (simd_dot(normal, point) + d) / simd_length(normal)
     }
+}
+
+struct Pose {
+    let translation: simd_double3
+    let rot: matrix_double3x3
 }
