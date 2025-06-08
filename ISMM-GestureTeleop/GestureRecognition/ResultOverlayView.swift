@@ -16,10 +16,28 @@ class ResultOverlayView: UIView {
     var centroid3D: SIMD3<Double>? = nil
     var axes3D: matrix_double3x3? = nil
     var intrinsics: matrix_float3x3? = nil
-
+    
     override func draw(_ rect: CGRect) {
-        guard let context = UIGraphicsGetCurrentContext(),
-              let points = points else { return }
+        guard let context = UIGraphicsGetCurrentContext() else {
+            return
+        }
+        
+        // Gesture label
+        if let message = messageLabel {
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.alignment = .center
+
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 24, weight: .bold),
+                .foregroundColor: UIColor.green,
+                .paragraphStyle: paragraphStyle
+            ]
+
+            let textRect = CGRect(x: 0, y: 720, width: rect.width, height: 30)
+            message.draw(in: textRect, withAttributes: attributes)
+        }
+        
+        let points = points ?? []
 
         // Draw landmarks
         for point in points {
@@ -100,21 +118,6 @@ class ResultOverlayView: UIView {
 //                }
 //            }
 //        }
-
-        // Gesture label
-        if let message = messageLabel {
-            let paragraphStyle = NSMutableParagraphStyle()
-            paragraphStyle.alignment = .center
-
-            let attributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 24, weight: .bold),
-                .foregroundColor: UIColor.green,
-                .paragraphStyle: paragraphStyle
-            ]
-
-            let textRect = CGRect(x: 0, y: 720, width: rect.width, height: 30)
-            message.draw(in: textRect, withAttributes: attributes)
-        }
     }
 
     // Update everything at once
@@ -126,6 +129,9 @@ class ResultOverlayView: UIView {
         self.centroid3D = centroid3D
         self.axes3D = axes3D
         self.intrinsics = intrinsics
-        setNeedsDisplay()
+        DispatchQueue.main.async {
+                self.setNeedsDisplay()
+                self.layer.setNeedsDisplay()
+        }
     }
 }

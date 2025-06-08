@@ -16,13 +16,16 @@ class PoseEstimator {
         frameData: FrameData?
     ) -> Pose? {
         guard let depthMap = frameData?.depthData.depthDataMap else { return nil }
+        
         let format = CVPixelBufferGetPixelFormatType(depthMap)
         guard format == kCVPixelFormatType_DepthFloat32 else {
             print("Unsupported pixel format: \(format)")
             return nil
         }
 
-        let imageSize = CGSize(width: CVPixelBufferGetWidth(depthMap), height: CVPixelBufferGetHeight(depthMap))
+        let depthWidth = CVPixelBufferGetWidth(depthMap)
+        let depthHeight = CVPixelBufferGetHeight(depthMap)
+        let imageSize = CGSize(width: depthWidth, height: depthHeight)
 
         guard let handLandmarks = result?.landmarks.first else {
             print("No hand landmarks detected.")
@@ -32,16 +35,20 @@ class PoseEstimator {
         CVPixelBufferLockBaseAddress(depthMap, .readOnly)
         defer { CVPixelBufferUnlockBaseAddress(depthMap, .readOnly) }
 
-        let rowBytes = CVPixelBufferGetBytesPerRow(depthMap)
-        let baseAddress = CVPixelBufferGetBaseAddress(depthMap)!
-        let buffer = baseAddress.assumingMemoryBound(to: Float32.self)
-        
-        guard let rgbData = frameData?.rgbData else { return nil }
+        guard let baseAddress = CVPixelBufferGetBaseAddress(depthMap) else {
+            print("Depth base address is nil")
+            return nil
+        }
 
+        let rowBytes = CVPixelBufferGetBytesPerRow(depthMap)
+        let rowStride = rowBytes / MemoryLayout<Float32>.size
+        let buffer = baseAddress.assumingMemoryBound(to: Float32.self)
+
+        guard let rgbData = frameData?.rgbData else { return nil }
         guard let K = ISMMGestureTeleopApp.getFrameIntrinsics(from: rgbData) else {
             return nil
         }
-        
+
         let fx = K[0][0]
         let fy = K[1][1]
         let cx = K[2][0]
@@ -50,6 +57,11 @@ class PoseEstimator {
         var palmPoints3D: [simd_double3] = []
 
         for index in DefaultConstants.PALM_INDICES {
+            if index >= handLandmarks.count {
+                print("Landmark index \(index) out of bounds")
+                continue
+            }
+
             let lm = handLandmarks[index]
             let pixelX = CGFloat(lm.x) * DefaultConstants.IMAGE_DIMS.WIDTH
             let pixelY = CGFloat(lm.y) * DefaultConstants.IMAGE_DIMS.HEIGHT
@@ -58,9 +70,22 @@ class PoseEstimator {
 
             let row = Int(depthPixelY)
             let col = Int(depthPixelX)
-            let depthIndex = row * (rowBytes / MemoryLayout<Float32>.size) + col
-            let depth = buffer[depthIndex]
 
+            // Bounds check
+            guard row >= 0, row < depthHeight,
+                  col >= 0, col < depthWidth else {
+                print("Skipping out-of-bounds landmark at (\(row), \(col))")
+                continue
+            }
+
+            let depthIndex = row * rowStride + col
+            let maxIndex = rowStride * depthHeight
+            guard depthIndex >= 0 && depthIndex < maxIndex else {
+                print("Depth index out of bounds: \(depthIndex) (max: \(maxIndex))")
+                continue
+            }
+
+            let depth = buffer[depthIndex]
             if depth.isNaN || depth <= 0.0 {
                 continue
             }
@@ -76,6 +101,7 @@ class PoseEstimator {
 
         return pointsToPose(points: palmPoints3D)
     }
+
 
     static func pointsToPose(points: [simd_double3]) -> Pose? {
         let N = points.count
