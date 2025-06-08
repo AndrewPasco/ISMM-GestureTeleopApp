@@ -4,6 +4,8 @@
 //
 //  Created by Andrew Pasco on 21/05/2025.
 //
+// TODO: Refactor and update readme?
+// Average frame processing time: 34ms
 
 import UIKit
 import AVFoundation
@@ -30,6 +32,27 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
     private var firstResult: FirstResult?
     
     private let resultUIView = ResultOverlayView()
+    
+    // Buffers for gesture detection
+    private var openPalmConfidence: Float = 0.0
+    private var fistConfidence: Float = 0.0
+    private var victoryConfidence: Float = 0.0
+
+    // Constants
+    private let maxConfidence: Float = 1.0
+    private let minConfidence: Float = 0.0
+    private let gestureIncrement: Float = 0.04
+    private let gestureDecrement: Float = 0.03
+    private let commandThreshold: Float = 0.7
+    private let gripperThreshold: Float = 0.9
+
+    // State tracking
+    private var isTracking: Bool = false
+    
+    private var lastCommandStatus: String?
+    private var lastCommandTimestamp: Int?
+    private let commandStatusDisplayDuration: Int = 500  // ms
+    private var gripperClosed: Bool = false
 
     var onConnectionStatusChange: ((ConnectionStatus) -> Void)? {
         didSet { tcpClient.onStatusChange = onConnectionStatusChange }
@@ -85,7 +108,6 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
         gestureProcessingQueue.async {
             if self.isProcessingFrame {
                 self.latestFrame = FrameData(rgbData: sampleBuffer, depthData: depthData)
-                print("saving newest frame")
                 return
             }
             self.isProcessingFrame = true
@@ -102,26 +124,27 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
                 )
             } catch {
                 print("Gesture recognition error: \(error)")
-                self.finishProcessing()
+                self.finishProcessing(previewResult: nil, pose: nil, K: nil, timestamp: nil, gesture: nil)
             }
         }
     }
     
     // Closure method which takes the async result from the poseRecognizerDelegate
     private func handlePoseResult(result: GestureRecognizerResult?,
-            timestampInMilliseconds: Int) {
+            timestampInMilliseconds: Int?) {
         // Ensure successful result
-        print("hand pose result")
-        guard let result = result else {
-            print("No result")
-            finishProcessing()
+        guard let result = result,
+              let processingFrame = processingFrame,
+              !result.landmarks.isEmpty else {
+            print("No hand detected or no valid frame")
+            finishProcessing(previewResult: nil, pose: nil, K: nil, timestamp: nil, gesture: nil)
             return
         }
             
         // Compute palm pose
-        guard let newPose = PoseEstimator.computePose(result: result, frameData: processingFrame) else {
-            print("Pose compute failure")
-            finishProcessing()
+        guard let newPose = PoseEstimator.computePose(result: result, frameData: processingFrame), let timestampInMilliseconds = timestampInMilliseconds else {
+            //print("Pose compute failure")
+            finishProcessing(previewResult: nil, pose: nil, K: nil, timestamp: nil, gesture: nil)
             return
         }
         
@@ -132,10 +155,7 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
         let xAxisXY = CGVector(dx:xAxis.x, dy:xAxis.y)
         let reorientation = getImageReorientation(for: xAxisXY)
         
-        guard let rgb = processingFrame?.rgbData else {
-            finishProcessing()
-            return
-        }
+        let rgb = processingFrame.rgbData
         
         // Convert the `CMSampleBuffer` object to MediaPipe's Image object,
         // rotating as determiend above, then pass to the Recognizer
@@ -147,48 +167,130 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
             )
         } catch {
             print("Gesture recognition error: \(error)")
-            finishProcessing()
+            finishProcessing(previewResult: nil, pose: nil, K: nil, timestamp: nil, gesture: nil)
         }
         
     }
     
     private func handleGestureResult(result: GestureRecognizerResult?, timestampInMilliseconds: Int) {
         // Ensure successful result
-        print("handle gesture result")
-        guard let result = result else {
-            print("No result")
+        //print("handle gesture result")
+        guard let result = result,
+              let rgb = processingFrame?.rgbData,
+              let recognizedGesture = result.gestures.first?[0].categoryName,
+              let pose = firstResult?.pose,
+              let previewResult = firstResult?.result,
+              let K = ISMMGestureTeleopApp.getFrameIntrinsics(from: rgb) else {
+            //print("gesture result guard catch")
+            finishProcessing(previewResult: nil, pose: nil, K: nil, timestamp: timestampInMilliseconds, gesture: nil)
             return
         }
         
-        guard let rgb = processingFrame?.rgbData, let recognizedGesture = result.gestures.first?[0].categoryName, let pose = firstResult?.pose, let previewResult = firstResult?.result else {
-            finishProcessing()
-            return
-        }
-        
-        guard let K = ISMMGestureTeleopApp.getFrameIntrinsics(from: rgb) else {
-            finishProcessing()
-            return
-        }
-        
-        // Passing for landmark drawing
-        DispatchQueue.main.async {
-            self.updateHandPreview(firstResult: previewResult, gesture: recognizedGesture, pose: pose, intrinsics: K)
-        }
-        
-        //sendGestureAndPose(gesture: recognizedGesture, pose: pose)
-        
-        self.finishProcessing()
+        self.finishProcessing(previewResult: previewResult, pose: pose, K: K, timestamp: timestampInMilliseconds, gesture: recognizedGesture)
     }
 
-    private func finishProcessing() {
+    private func finishProcessing(previewResult: GestureRecognizerResult?, pose: Pose?, K: matrix_float3x3?, timestamp: Int?, gesture: String?) {
+        // Passing for landmark drawing
         gestureProcessingQueue.async {
             self.isProcessingFrame = false
             if let newFrame = self.latestFrame {
                 self.latestFrame = nil
                 self.handleFrame(sampleBuffer: newFrame.rgbData, depthData: newFrame.depthData)
-            } else {
-                return
             }
+        }
+        
+        guard let previewResult = previewResult,
+              let pose = pose,
+              let K = K,
+              let timestamp = timestamp,
+              let gesture = gesture else {
+            DispatchQueue.main.async {
+                self.updateHandPreview(firstResult: previewResult, message: nil, pose: pose, intrinsics: K)
+            }
+            processGesture(gesture, pose: pose)
+            return
+        }
+        
+        // Run filtered gesture-to-command logic
+        // Process command logic and get UI label string
+        let status = processGesture(gesture, pose: pose)
+        if let status = status {
+            lastCommandStatus = status
+            lastCommandTimestamp = timestamp
+        }
+        
+        let displayStatus: String
+        if let lastStatus = lastCommandStatus,
+           let lastTime = lastCommandTimestamp,
+           (timestamp - lastTime) < commandStatusDisplayDuration {
+            displayStatus = lastStatus
+        } else {
+            displayStatus = ""
+        }
+        
+        DispatchQueue.main.async {
+            self.updateHandPreview(firstResult: previewResult, message: displayStatus, pose: pose, intrinsics: K)
+        }
+    }
+    
+    private func processGesture(_ gesture: String?, pose: Pose?) -> String? {
+        // Update confidence levels
+        updateConfidence(&openPalmConfidence, gesture == "Open_Palm")
+        updateConfidence(&fistConfidence, gesture == "Closed_Fist")
+        updateConfidence(&victoryConfidence, gesture == "Victory")
+
+        // Gripper command
+        if fistConfidence > gripperThreshold {
+            if !gripperClosed {
+                sendCommand(.gripper, pose: nil)
+                fistConfidence = 0
+                gripperClosed = !gripperClosed
+                print("closing")
+                return "Closing Gripper"
+            } else {
+                sendCommand(.gripper, pose: nil)
+                fistConfidence = 0
+                gripperClosed = !gripperClosed
+                print("opening")
+                return "Opening Gripper"
+            }
+        }
+        
+        // Reset command
+        if victoryConfidence > commandThreshold {
+            sendCommand(.reset, pose: nil)
+            victoryConfidence = 0
+            print("reset")
+            return "Resetting"
+        }
+
+        // Tracking state logic
+        if openPalmConfidence > commandThreshold {
+            if !isTracking {
+                sendCommand(.start, pose: pose)
+                isTracking = true
+                print("start")
+                return "Tracking"
+            } else {
+                sendCommand(.track, pose: pose)
+                return "Tracking"
+            }
+        } else {
+            if isTracking {
+                sendCommand(.end, pose: pose)
+                isTracking = false
+                print("end")
+                return "Ending Tracking"
+            }
+        }
+        return nil
+    }
+    
+    private func updateConfidence(_ buffer: inout Float, _ increase: Bool) {
+        if increase {
+            buffer = min(maxConfidence, buffer + gestureIncrement)
+        } else {
+            buffer = max(minConfidence, buffer - gestureDecrement)
         }
     }
     
@@ -196,23 +298,29 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
         tcpClient.connect()
     }
     
-    private func sendGestureAndPose(gesture: String, pose: Pose) {
-        // Transform to quat for sending
-        let quat = simd_quaternion(pose.rot)
+    private func sendCommand(_ command: TeleopCommand, pose: Pose?) {
+        var message: String = command.rawValue
         
-        let poseData = String(format: "%@ %.6f %.6f %.6f %.6f %.6f %.6f %.6f\n", gesture,
-                              pose.translation.x, pose.translation.y, pose.translation.z,
-                              quat.vector.w, quat.vector.x, quat.vector.y, quat.vector.z)
-        
-        if let dataToSend = poseData.data(using: .utf8) {
-            tcpClient.send(data: dataToSend)
+        if let pose = pose, [.start, .end, .track].contains(command) {
+            let quat = simd_quaternion(pose.rot)
+            message += " \(pose.translation.x) \(pose.translation.y) \(pose.translation.z) \(quat.vector.w) \(quat.vector.x) \(quat.vector.y) \(quat.vector.z)"
+        }
+
+        if let dataToSend = message.data(using: .utf8) {
+            //tcpClient.send(data: dataToSend)
         }
     }
     
-    private func updateHandPreview(firstResult: GestureRecognizerResult, gesture: String, pose: Pose, intrinsics: matrix_float3x3) {
+    private func updateHandPreview(firstResult: GestureRecognizerResult?, message: String?, pose: Pose?, intrinsics: matrix_float3x3?) {
         // get hand landmarks from the original recognition
-        guard let handLandmarks = firstResult.landmarks.first else {
-            print("No hand landmarks detected.")
+        guard let handLandmarks = firstResult?.landmarks.first,
+              let message = message,
+              let pose = pose,
+              let intrinsics = intrinsics else {
+            //print("No hand landmarks detected.")
+            DispatchQueue.main.async {
+                self.resultUIView.update(points: nil, messageLabel: nil, centroid3D: nil, axes3D: nil, intrinsics: nil)
+            }
             return
         }
             
@@ -232,7 +340,7 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
         
         // Update overlay view on main thread
         DispatchQueue.main.async {
-            self.resultUIView.update(points: pointsToDraw, gestureLabel: gesture, centroid3D: pose.translation, axes3D: pose.rot, intrinsics: intrinsics)
+            self.resultUIView.update(points: pointsToDraw, messageLabel: message, centroid3D: pose.translation, axes3D: pose.rot, intrinsics: intrinsics)
         }
     }
     
@@ -294,4 +402,12 @@ struct FrameData {
 struct FirstResult {
     let result: GestureRecognizerResult
     let pose: Pose
+}
+
+enum TeleopCommand: String {
+    case start = "<Start>"
+    case end = "<End>"
+    case track = "<Track>"
+    case gripper = "<Gripper>"
+    case reset = "<Reset>"
 }

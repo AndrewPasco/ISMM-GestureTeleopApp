@@ -12,7 +12,7 @@ import MediaPipeTasksVision
 
 class PoseEstimator {
     static func computePose(
-        result: GestureRecognizerResult,
+        result: GestureRecognizerResult?,
         frameData: FrameData?
     ) -> Pose? {
         guard let depthMap = frameData?.depthData.depthDataMap else { return nil }
@@ -24,7 +24,7 @@ class PoseEstimator {
 
         let imageSize = CGSize(width: CVPixelBufferGetWidth(depthMap), height: CVPixelBufferGetHeight(depthMap))
 
-        guard let handLandmarks = result.landmarks.first else {
+        guard let handLandmarks = result?.landmarks.first else {
             print("No hand landmarks detected.")
             return nil
         }

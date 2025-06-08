@@ -9,8 +9,8 @@ import UIKit
 import simd
 
 class ResultOverlayView: UIView {
-    var points: [CGPoint] = []
-    var gestureLabel: String? = nil
+    var points: [CGPoint]? = []
+    var messageLabel: String? = nil
 
     // 3D coordinate frame
     var centroid3D: SIMD3<Double>? = nil
@@ -18,7 +18,8 @@ class ResultOverlayView: UIView {
     var intrinsics: matrix_float3x3? = nil
 
     override func draw(_ rect: CGRect) {
-        guard let context = UIGraphicsGetCurrentContext() else { return }
+        guard let context = UIGraphicsGetCurrentContext(),
+              let points = points else { return }
 
         // Draw landmarks
         for point in points {
@@ -101,7 +102,7 @@ class ResultOverlayView: UIView {
 //        }
 
         // Gesture label
-        if let gesture = gestureLabel {
+        if let message = messageLabel {
             let paragraphStyle = NSMutableParagraphStyle()
             paragraphStyle.alignment = .center
 
@@ -112,16 +113,16 @@ class ResultOverlayView: UIView {
             ]
 
             let textRect = CGRect(x: 0, y: 720, width: rect.width, height: 30)
-            gesture.draw(in: textRect, withAttributes: attributes)
+            message.draw(in: textRect, withAttributes: attributes)
         }
     }
 
     // Update everything at once
-    func update(points: [CGPoint], gestureLabel: String?,
+    func update(points: [CGPoint]?, messageLabel: String?,
                 centroid3D: SIMD3<Double>?, axes3D: matrix_double3x3?,
                 intrinsics: matrix_float3x3?) {
         self.points = points
-        self.gestureLabel = gestureLabel
+        self.messageLabel = messageLabel
         self.centroid3D = centroid3D
         self.axes3D = axes3D
         self.intrinsics = intrinsics
