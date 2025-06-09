@@ -25,6 +25,7 @@ ISMM-GestureTeleop transforms your iPhone into a sophisticated gesture control i
 
 ### Hardware
 - iOS device with TrueDepth camera (iPhone X and later)
+    - NOTE: currently only in development testing with iPhone 14
 - Minimum iOS 14.0
 
 ### Software
