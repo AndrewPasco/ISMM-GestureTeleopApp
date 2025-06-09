@@ -4,45 +4,93 @@
 //
 //  Created by Andrew Pasco on 29/05/25.
 //
+//  Description: Camera management system for synchronized RGB and depth data capture.
+//  Handles TrueDepth camera configuration, preview setup, and synchronized frame delivery
+//  for real-time gesture recognition applications.
+//
 
 import AVFoundation
 import UIKit
 import CoreImage
 
-import AVFoundation
-import UIKit
-
+/**
+ * Camera manager that handles TrueDepth camera configuration and synchronized RGB/depth capture.
+ *
+ * Features:
+ * - TrueDepth camera discovery and configuration
+ * - Synchronized RGB and depth data capture
+ * - Camera intrinsic matrix delivery
+ * - Preview layer management
+ * - Thread-safe frame processing
+ */
 class CameraManager: NSObject, AVCaptureDataOutputSynchronizerDelegate {
     
+    // MARK: - Types
+    
+    /**
+     * Enumeration representing camera setup results.
+     */
     private enum SessionSetupResult {
         case success
         case notAuthorized
         case configurationFailed
     }
     
+    // MARK: - Properties
+    
+    /// Current setup result status
     private var setupResult: SessionSetupResult = .success
+    
+    /// Main capture session
     private let session = AVCaptureSession()
+    
+    /// Session running state flag
     private var isSessionRunning = false
     
+    /// Video device input for TrueDepth camera
     private var videoDeviceInput: AVCaptureDeviceInput!
+    
+    /// Output for RGB video data
     private let videoDataOutput = AVCaptureVideoDataOutput()
+    
+    /// Output for depth data
     private let depthDataOutput = AVCaptureDepthDataOutput()
+    
+    /// Synchronizer for coordinated RGB/depth output
     private var outputSynchronizer: AVCaptureDataOutputSynchronizer?
 
+    /// Device discovery session for TrueDepth cameras
     private let videoDeviceDiscoverySession = AVCaptureDevice.DiscoverySession(
         deviceTypes: [.builtInTrueDepthCamera],
         mediaType: .video,
         position: .front
     )
 
+    /// Serial queue for session configuration
     private let sessionQueue = DispatchQueue(label: "session queue")
+    
+    /// Queue for data output processing
     private let dataOutputQueue = DispatchQueue(label: "data output queue", qos: .userInitiated)
     
+    /// Camera preview layer (read-only access)
     public private(set) var previewLayer: AVCaptureVideoPreviewLayer?
+    
+    /// Container view for preview layer
     private var previewContainerView: UIView?
     
+    /// Callback for synchronized frame capture
     var onFrameCaptured: ((CMSampleBuffer, AVDepthData) -> Void)?
 
+    // MARK: - Configuration
+    
+    /**
+     * Configures the camera session and starts capture.
+     *
+     * Initializes the TrueDepth camera, configures synchronized outputs,
+     * and sets up the preview layer in the provided view.
+     *
+     * - Parameter view: Optional view to display camera preview
+     */
     func configure(previewIn view: UIView?) {
         self.previewContainerView = view
         sessionQueue.async {
@@ -52,6 +100,16 @@ class CameraManager: NSObject, AVCaptureDataOutputSynchronizerDelegate {
         }
     }
 
+    /**
+     * Configures the capture session with TrueDepth camera and synchronized outputs.
+     *
+     * Sets up:
+     * - TrueDepth camera input with intrinsic matrix delivery
+     * - RGB video output (BGRA format)
+     * - Depth data output (Float32 format)
+     * - Output synchronization
+     * - Preview layer setup
+     */
     private func configureSession() {
         guard setupResult == .success else { return }
         
@@ -70,7 +128,6 @@ class CameraManager: NSObject, AVCaptureDataOutputSynchronizerDelegate {
         }
 
         session.beginConfiguration()
-        //session.sessionPreset = .vga640x480
 
         guard session.canAddInput(videoDeviceInput) else {
             print("Could not add video device input to the session")
@@ -80,6 +137,7 @@ class CameraManager: NSObject, AVCaptureDataOutputSynchronizerDelegate {
         }
         session.addInput(videoDeviceInput)
 
+        // Configure RGB video output
         if session.canAddOutput(videoDataOutput) {
             videoDataOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32BGRA)]
             session.addOutput(videoDataOutput)
@@ -89,7 +147,6 @@ class CameraManager: NSObject, AVCaptureDataOutputSynchronizerDelegate {
             } else {
                 print("Camera intrinsic matrix delivery not supported.")
             }
-
         } else {
             print("Could not add video data output to the session")
             setupResult = .configurationFailed
@@ -97,6 +154,7 @@ class CameraManager: NSObject, AVCaptureDataOutputSynchronizerDelegate {
             return
         }
 
+        // Configure depth data output
         if session.canAddOutput(depthDataOutput) {
             depthDataOutput.isFilteringEnabled = false
             session.addOutput(depthDataOutput)
@@ -112,6 +170,7 @@ class CameraManager: NSObject, AVCaptureDataOutputSynchronizerDelegate {
             return
         }
 
+        // Configure depth format for highest resolution Float32
         let depthFormats = videoDevice.activeFormat.supportedDepthDataFormats.filter {
             CMFormatDescriptionGetMediaSubType($0.formatDescription) == kCVPixelFormatType_DepthFloat32
         }
@@ -133,6 +192,7 @@ class CameraManager: NSObject, AVCaptureDataOutputSynchronizerDelegate {
             }
         }
 
+        // Set up synchronized output
         outputSynchronizer = AVCaptureDataOutputSynchronizer(dataOutputs: [videoDataOutput, depthDataOutput])
         outputSynchronizer?.setDelegate(self, queue: dataOutputQueue)
         
@@ -143,6 +203,14 @@ class CameraManager: NSObject, AVCaptureDataOutputSynchronizerDelegate {
         }
     }
     
+    /**
+     * Sets up the camera preview layer on the specified view.
+     *
+     * Creates and configures the preview layer with appropriate styling
+     * and adds it to the view hierarchy on the main thread.
+     *
+     * - Parameter view: The view to contain the preview layer
+     */
     private func setupPreview(on view: UIView) {
         previewLayer = AVCaptureVideoPreviewLayer(session: session)
         previewLayer?.videoGravity = .resizeAspectFill
@@ -161,6 +229,18 @@ class CameraManager: NSObject, AVCaptureDataOutputSynchronizerDelegate {
         }
     }
 
+    // MARK: - AVCaptureDataOutputSynchronizerDelegate
+    
+    /**
+     * Handles synchronized RGB and depth data delivery.
+     *
+     * Processes synchronized frame pairs from RGB and depth outputs,
+     * validates data integrity, and triggers the frame capture callback.
+     *
+     * - Parameters:
+     *   - synchronizer: The output synchronizer
+     *   - synchronizedDataCollection: Collection of synchronized output data
+     */
     func dataOutputSynchronizer(_ synchronizer: AVCaptureDataOutputSynchronizer,
                                 didOutput synchronizedDataCollection: AVCaptureSynchronizedDataCollection) {
         guard let syncedDepthData = synchronizedDataCollection.synchronizedData(for: depthDataOutput) as? AVCaptureSynchronizedDepthData,
@@ -181,13 +261,19 @@ class CameraManager: NSObject, AVCaptureDataOutputSynchronizerDelegate {
         let depthData = syncedDepthData.depthData
         let sampleBuffer = syncedVideoData.sampleBuffer
 
-        // Trigger callback
+        // Trigger callback on background queue
         DispatchQueue.global(qos: .userInitiated).async {
             self.onFrameCaptured?(sampleBuffer, depthData)
         }
     }
 
-
+    // MARK: - Session Control
+    
+    /**
+     * Stops the camera capture session.
+     *
+     * Safely stops the session on the session queue and updates the running state.
+     */
     func stop() {
         sessionQueue.async {
             if self.isSessionRunning {
@@ -197,6 +283,11 @@ class CameraManager: NSObject, AVCaptureDataOutputSynchronizerDelegate {
         }
     }
 
+    /**
+     * Starts the camera capture session.
+     *
+     * Safely starts the session on the session queue and updates the running state.
+     */
     func start() {
         sessionQueue.async {
             if !self.isSessionRunning {
@@ -206,16 +297,3 @@ class CameraManager: NSObject, AVCaptureDataOutputSynchronizerDelegate {
         }
     }
 }
-
-extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
-    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        print("Raw video frame received: \(CMSampleBufferGetPresentationTimeStamp(sampleBuffer).seconds)")
-    }
-}
-
-extension CameraManager: AVCaptureDepthDataOutputDelegate {
-    func depthDataOutput(_ output: AVCaptureDepthDataOutput, didOutput depthData: AVDepthData, timestamp: CMTime, connection: AVCaptureConnection) {
-        print("Raw depth data received: \(timestamp.seconds)")
-    }
-}
-

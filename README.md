@@ -1,78 +1,162 @@
 # ISMM-GestureTeleop
 
-An iOS app for real-time gesture-based teleoperation. This app captures synchronized RGB and depth frames from the iPhone camera, detects hand gestures using MediaPipe, estimates the 3D pose of the user's palm, and streams the relevant information to a remote server over TCP.
+A real-time iOS application for gesture-based robot teleoperation that captures synchronized RGB and depth data, recognizes hand gestures using MediaPipe, estimates 3D palm poses, and streams teleoperation commands to remote servers via TCP.
 
-## Features
+## Overview
 
-- Real-time hand gesture recognition using MediaPipe's GestureRecognizer.
-- 3D palm pose estimation using RGB-D input and SVD-based plane fitting.
-- TCP-based communication with a remote robot or server.
-- Visual overlay for recognized gestures and landmark positions.
-- Modular design for camera handling, gesture recognition, and networking.
+ISMM-GestureTeleop transforms your iPhone into a sophisticated gesture control interface for robotic systems. The app leverages the device's TrueDepth or LiDAR camera to capture both RGB and depth information, enabling precise 3D hand tracking and pose estimation. Recognized gestures are translated into robot commands and transmitted over TCP for real-time teleoperation.
 
-## Getting Started
+## Key Features
 
-### Prerequisites
+- **Real-time Hand Gesture Recognition**: Utilizes MediaPipe's GestureRecognizer for accurate hand gesture detection
+- **3D Palm Pose Estimation**: Combines RGB-D input with SVD-based plane fitting for precise 3D pose calculation
+- **Synchronized Data Capture**: Coordinates RGB and depth frame capture using AVCaptureMultiCamSession
+- **TCP Communication**: Reliable streaming of gesture and pose data to remote robot controllers
+- **Visual Feedback**: Real-time overlay showing hand landmarks and recognized gestures
+- **Modular Architecture**: Clean separation of concerns across camera handling, gesture recognition, and networking
 
-- Xcode 15 or later
-- iOS device with TrueDepth or LiDAR camera (for depth capture)
+## Supported Gestures
+
+- **Open Palm**: Initiates and maintains tracking mode
+- **Closed Fist**: Toggles gripper open/close
+- **Victory Sign**: Resets the robot to home position
+
+## System Requirements
+
+### Hardware
+- iOS device with TrueDepth camera (iPhone X and later)
+- Minimum iOS 14.0
+
+### Software
+- Xcode 15.0 or later
 - Swift 5.9+
-- CocoaPods
-- MediaPipeTasksVision framework integrated into the project
+- CocoaPods or Swift Package Manager
 
-### Installation
+## Installation
 
-1. **Clone this repository:**
-   ```bash
-   git clone https://github.com/AndrewPasco/ISMM-GestureTeleop.git
-   cd ISMM-GestureTeleop/bash```
+### 1. Clone the Repository
+```bash
+git clone https://github.com/AndrewPasco/ISMM-GestureTeleop.git
+cd ISMM-GestureTeleop
+```
 
-2. **Install dependencies** (e.g., via CocoaPods or SPM):
-Make sure MediaPipeTasksVision and any other required frameworks are linked.
+### 2. Install Dependencies
 
-3. **Build and run on a real device** — depth capture is not available in the simulator.
+#### Using CocoaPods
+```bash
+pod install
+open ISMM-GestureTeleop.xcworkspace
+```
 
-## App Structure
-- ISMMGestureTeleopApp: Main coordinator handling camera capture, gesture recognition, depth data processing, and TCP streaming.
-- CameraManager: Manages synchronized RGB and depth capture using AVCaptureMultiCamSession.
-- TCPClient: Handles low-level TCP socket communication.
-- FrameEncoder: (optional) Handles JPEG compression and packaging of data (not shown in main file).
-- ResultOverlayView: Renders hand landmarks and recognized gesture label on top of the preview.
+### 3. Configure MediaPipe Model
+1. Download the MediaPipe hand gesture recognition model "gesture_recognizer.task"
+2. Add the model file to your Xcode project bundle
+3. Update the model path in `DefaultConstants.swift`
 
-### How It Works
+### 4. Build and Deploy
+1. Connect your iOS device via USB
+2. Select your device as the build target
+3. Build and run the project (⌘+R)
 
-1. Frame Capture:
-- Captures RGB and depth frames using CameraManager.
-- Attaches intrinsic matrix metadata from the camera.
-2. Gesture Recognition:
-- Converts the RGB frame to MPImage with correct orientation.
-- Passes the image and timestamp to MediaPipe’s GestureRecognizer.
-3. 3D Pose Estimation:
-- Matches the recognition result to the cached depth frame by timestamp.
-- Extracts depth values at key palm landmark positions.
-- Computes 3D palm orientation using SVD plane fitting.
-- Builds a 4×4 transformation matrix (pose).
-4. Networking:
-- Sends recognized gesture and pose data to a remote server via TCPClient.
-5. Visualization:
-- Draws 2D palm landmarks and gesture labels on the camera preview.
+**Note**: The depth capture functionality requires a physical device and will not work in the iOS Simulator.
 
-### Configuration
+## Project Architecture
 
-Adjust constants (such as the model path and gesture confidence thresholds) in the DefaultConstants struct. Ensure a compatible MediaPipe hand gesture model is available and correctly referenced.
+### Core Components
 
-### Future Improvements
+- **`ISMMGestureTeleopApp`**: Main coordinator managing the entire gesture recognition and teleoperation pipeline
+- **`CameraManager`**: Handles synchronized RGB and depth data capture using AVFoundation
+- **`PoseEstimator`**: Implements 3D pose estimation algorithms using SVD-based plane fitting
+- **`TCPClient`**: Manages reliable TCP socket connections and data transmission
+- **`GestureRecognizerResultDelegate`**: Bridges MediaPipe results with the main application logic
+- **`ResultOverlayView`**: Provides visual feedback with hand landmark rendering and status display
 
-- Add camera switching support (e.g., LiDAR vs TrueDepth).
-- Enhance gesture filtering and prediction smoothing.
-- Consider removing OpenCV framework (not currently used due to plane-normal approach)
+### Data Flow
+
+1. **Frame Capture**: `CameraManager` captures synchronized RGB and depth frames
+2. **Gesture Recognition**: MediaPipe processes RGB frames to detect hand gestures
+3. **Pose Estimation**: `PoseEstimator` combines landmark data with depth information for 3D pose calculation
+4. **Command Generation**: Recognized gestures are filtered and translated into robot commands
+5. **Network Transmission**: `TCPClient` streams commands to the target robot system
+6. **Visual Feedback**: `ResultOverlayView` displays real-time tracking information
+
+## Configuration
+
+### Network Settings
+Update the default IP address and port in `ViewController.swift`:
+```swift
+ipTextField.text = "HOST_IP"
+let port = 5000  // Adjust as needed
+```
+
+### Gesture Recognition Parameters
+Modify sensitivity and thresholds in `DefaultConstants.swift`:
+```swift
+static let minHandDetectionConfidence: Float = 0.5
+static let minHandPresenceConfidence: Float = 0.5
+static let minTrackingConfidence: Float = 0.5
+```
+
+Modify gesture to command behavior in `ISMMGestureTeleopApp.swift`:
+```swift
+private struct GestureConfig {
+    static let maxConfidence: Float = 1.0
+    static let minConfidence: Float = 0.0
+    static let gestureIncrement: Float = 0.04
+    static let gestureDecrement: Float = 0.09
+    static let commandThreshold: Float = 0.7
+    static let gripperThreshold: Float = 0.9
+    static let commandStatusDisplayDurationMs: Int = 500
+}
+```
+
+### Model Configuration
+Ensure the MediaPipe model path is correctly set:
+```swift
+static let modelPath = Bundle.main.path(forResource: "gesture_recognizer", ofType: "task")
+```
+
+## Usage
+
+1. **Launch the App**: Open the app on your iOS device
+2. **Enter Robot IP**: Input the IP address of your target robot system
+3. **Connect**: Tap the "Connect" button to establish TCP connection
+4. **Start Gesturing**: Use the supported hand gestures to control your robot:
+   - Hold an open palm to begin tracking
+   - Make a fist to toggle the gripper
+   - Show a victory sign to reset the robot
+
+## Command Protocol
+
+The app transmits commands in the following format:
+```
+<Start> x y z qw qx qy qz    # Begin tracking with pose
+<Track> x y z qw qx qy qz    # Update tracking pose
+<End> x y z qw qx qy qz      # End tracking with final pose
+<Gripper>                    # Toggle gripper state
+<Reset>                      # Reset robot to home position
+```
+
+Where `x y z` represents the 3D translation and `qw qx qy qz` represents the orientation quaternion.
+
+## Known Limitations
+
+- Depth capture requires specific hardware (TrueDepth or LiDAR)
+- Performance may vary under different lighting conditions
+- Network latency affects real-time control responsiveness
+- Single-hand tracking only
+
 
 ## License
 
-This project is licensed under the BSD 3-clause license. See the LICENSE file for details.
+This project is licensed under the BSD 3-Clause License. See the [LICENSE](LICENSE) file for details.
 
-Some files were adapted from MediaPipe example implementations. See GestureRecognition/LICENSE\_MP file for details. 
+Some components are adapted from MediaPipe example implementations. See [GestureRecognition/LICENSE_MP](GestureRecognition/LICENSE_MP) for MediaPipe-specific licensing details.
 
 ## Author
 
-Developed by Andrew Pasco (apascos@gmail.com) for gesture-based robot teleoperation research.
+**Andrew Pasco** - [apascos@gmail.com](mailto:apascos@gmail.com)
+
+Developed for gesture-based robot teleoperation research at [Cyber Human Lab - Cambridge Institute for Manufacturing](cyberhuman.io).
+
+## Acknowledgments
