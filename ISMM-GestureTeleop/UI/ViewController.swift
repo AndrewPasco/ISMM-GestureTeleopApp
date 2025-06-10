@@ -43,7 +43,7 @@ class ViewController: UIViewController {
         view.addSubview(statusLabel)
 
         ipTextField.placeholder = "Enter IP Address"
-        ipTextField.text = "10.228.13.158"  // Default IP
+        ipTextField.text = "172.16.170.224"  // Default MIT IP:10.29.171.152 (172.16.170.224 for testing on trin ethernet)
         ipTextField.textAlignment = .center
         ipTextField.borderStyle = .roundedRect
         ipTextField.backgroundColor = .white
@@ -93,7 +93,7 @@ class ViewController: UIViewController {
         }
 
         if appCoordinator == nil {
-            appCoordinator = ISMMGestureTeleopApp(host: ip, port: 5000, previewView: self.view)
+            appCoordinator = ISMMGestureTeleopApp(host: ip, port: 6789, previewView: self.view)
 
             // Insert preview layer from cameraManager
             if let previewLayer = appCoordinator?.getPreviewLayer() {

@@ -34,6 +34,8 @@ struct DefaultConstants {
     static let PALM_INDICES = [0, 1, 5, 9, 13, 17]
     static let PREVIEW_DIMS = (WIDTH: 390, HEIGHT: 763) // should probably be grabbing these from device config
     static let IMAGE_DIMS = (WIDTH: 1920.0, HEIGHT: 1080.0)
+    
+    static let SLERP_T = 0.2 // lower seems better on this
 }
 
 // MARK: GestureRecognizerDelegate

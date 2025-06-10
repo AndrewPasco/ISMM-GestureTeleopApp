@@ -12,11 +12,14 @@
 //  MediaPipe gesture recognition, estimates 3D palm poses, and transmits teleoperation
 //  commands to remote robot systems via TCP.
 //
+// TODO: Low pass filtering for orientation, moving average filtering for position?
+// TODO: Landscape orientation by default - match workspace
 
 import UIKit
 import AVFoundation
 import MediaPipeTasksVision
 import simd
+import Spatial
 import Foundation
 import Accelerate
 
@@ -28,7 +31,7 @@ private struct GestureConfig {
     /// Rate at which gesture confidence increases when detected
     static let gestureIncrement: Float = 0.04
     /// Rate at which gesture confidence decreases when not detected
-    static let gestureDecrement: Float = 0.09
+    static let gestureDecrement: Float = 0.027
     /// Confidence threshold for triggering general commands
     static let commandThreshold: Float = 0.7
     /// Higher confidence threshold for gripper commands (prevents accidental triggering)
@@ -41,10 +44,11 @@ private struct GestureConfig {
 /// Manages the state and confidence levels for recognized gestures
 private struct GestureState {
     var openPalmConfidence: Float = 0.0
-    var fistConfidence: Float = 0.0
     var victoryConfidence: Float = 0.0
+    var resetConfidence: Float = 0.0
     var isTracking: Bool = false
     var gripperClosed: Bool = false
+    var lastValidPose: Pose?
     
     /// Updates a confidence value based on whether the gesture is currently detected
     /// - Parameters:
@@ -62,12 +66,12 @@ private struct GestureState {
     /// Updates all gesture confidence levels based on current detection results
     /// - Parameters:
     ///   - openPalm: Whether open palm gesture is currently detected
-    ///   - fist: Whether closed fist gesture is currently detected
     ///   - victory: Whether victory sign gesture is currently detected
-    mutating func updateConfidences(openPalm: Bool, fist: Bool, victory: Bool) {
+    ///   - reset: Whether reset (horns) gesture is currently detected
+    mutating func updateConfidences(openPalm: Bool, victory: Bool, reset: Bool) {
         openPalmConfidence = updateConfidence(openPalmConfidence, shouldIncrease: openPalm)
-        fistConfidence = updateConfidence(fistConfidence, shouldIncrease: fist)
         victoryConfidence = updateConfidence(victoryConfidence, shouldIncrease: victory)
+        resetConfidence = updateConfidence(resetConfidence, shouldIncrease: reset)
     }
 }
 
@@ -256,8 +260,29 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
             return
         }
         
-        firstResult = FirstResult(result: result, pose: pose)
-        recognizeGesture(with: pose, timestamp: timestamp)
+        // apply SLERP from last valid pose to newly computed pose (only if we have a last valid pose)
+        // Save pose-slerp as last valid pose
+        if let lastPose = gestureState.lastValidPose {
+            let lastRot3D = Rotation3D(simd_quatd(lastPose.rot))
+            let newRot3D = Rotation3D(simd_quatd(pose.rot))
+            
+            let rotSLERP = Rotation3D.slerp(from:lastRot3D, to:newRot3D, t:DefaultConstants.SLERP_T)
+            let slerpQuat = rotSLERP.quaternion
+            let slerpRot = R_from_quat(slerpQuat)
+            
+            gestureState.lastValidPose = Pose(translation: pose.translation, rot: slerpRot)
+        } else {
+            print("setting new lastValidPose")
+            gestureState.lastValidPose = pose
+        }
+        
+        guard let filteredPose = gestureState.lastValidPose else {
+            print("filtered pose issue")
+            return
+        }
+    
+        firstResult = FirstResult(result: result, pose: filteredPose)
+        recognizeGesture(with: filteredPose, timestamp: timestamp)
     }
     
     /// Performs gesture recognition on a reoriented image based on hand pose
@@ -362,18 +387,18 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
     private func updateGestureConfidences(for gesture: String?) {
         gestureState.updateConfidences(
             openPalm: gesture == "Open_Palm",
-            fist: gesture == "Closed_Fist",
-            victory: gesture == "Victory"
+            victory: gesture == "Victory",
+            reset: gesture == "ILoveYou"
         )
     }
     
     /// Processes gripper commands based on fist gesture confidence
     /// - Returns: Status message if gripper command was triggered
     private func processGripperCommand() -> String? {
-        guard gestureState.fistConfidence > GestureConfig.gripperThreshold else { return nil }
+        guard gestureState.victoryConfidence > GestureConfig.gripperThreshold else { return nil }
         
         sendCommand(.gripper, pose: nil)
-        gestureState.fistConfidence = 0
+        gestureState.victoryConfidence = 0
         gestureState.gripperClosed.toggle()
         
         let action = gestureState.gripperClosed ? "Closing" : "Opening"
@@ -381,13 +406,13 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
         return "\(action) Gripper"
     }
     
-    /// Processes reset commands based on victory gesture confidence
+    /// Processes reset commands based on reset (horns) gesture confidence
     /// - Returns: Status message if reset command was triggered
     private func processResetCommand() -> String? {
-        guard gestureState.victoryConfidence > GestureConfig.commandThreshold else { return nil }
+        guard gestureState.resetConfidence > GestureConfig.commandThreshold else { return nil }
         
         sendCommand(.reset, pose: nil)
-        gestureState.victoryConfidence = 0
+        gestureState.resetConfidence = 0
         print("reset")
         return "Resetting"
     }
@@ -426,17 +451,53 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
         if command == .track && pose == nil {
             return
         }
-        
-        var message = command.rawValue
-        
-        if let pose = pose, [.start, .end, .track].contains(command) {
-            let quat = simd_quaternion(pose.rot)
-            message += " \(pose.translation.x) \(pose.translation.y) \(pose.translation.z) \(quat.vector.w) \(quat.vector.x) \(quat.vector.y) \(quat.vector.z)"
-        }
 
-        if let dataToSend = message.data(using: .utf8) {
-            // tcpClient.send(data: dataToSend)
+        var message: String = command.rawValue
+        
+        // Handle different command types
+        switch command {
+        case .gripper, .reset:
+            // These commands don't need pose data
+            break
+            
+        case .end:
+            // Always use lastValidPose for end commands
+            guard let lastPose = gestureState.lastValidPose else { return }
+            let sendPose = transformToRobotFrame(lastPose)
+            message += formatPoseForTransmission(sendPose)
+            gestureState.lastValidPose = nil
+            
+        case .start, .track:
+            // Use current pose for tracking commands
+            guard let currentPose = pose else { return }
+            let sendPose = transformToRobotFrame(currentPose)
+            message += formatPoseForTransmission(sendPose)
         }
+        
+        message += "\n" // comment if sending to real system
+        
+        if let dataToSend = message.data(using: .utf8) {
+            tcpClient.send(data: dataToSend) // comment if testing in place
+        }
+    }
+    
+    /// Transforms a pose from camera coordinates to robot coordinates
+    /// - Parameter cameraFramePose: Pose in camera coordinate system
+    /// - Returns: Pose transformed to robot coordinate system
+    private func transformToRobotFrame(_ cameraFramePose: Pose) -> Pose {
+        let frameRot = rotx(-Double.pi/2) * rotz(-Double.pi/2)
+        let poseMat = poseMatrix(pos: cameraFramePose.translation, rot: cameraFramePose.rot)
+        let transformedMat = transformFromRot(frameRot) * poseMat
+        let (newTrans, newRot) = posRotFromMat(transformedMat)
+        return Pose(translation: newTrans, rot: newRot)
+    }
+
+    /// Creates a formatted pose string for TCP transmission
+    /// - Parameter pose: Pose to format (should be in robot coordinates)
+    /// - Returns: String containing position and quaternion values
+    private func formatPoseForTransmission(_ pose: Pose) -> String {
+        let quat = simd_quaternion(pose.rot)
+        return " \(Float(pose.translation.x)) \(Float(pose.translation.y)) \(Float(pose.translation.z)) \(Float(quat.vector.w)) \(Float(quat.vector.x)) \(Float(quat.vector.y)) \(Float(quat.vector.z))"
     }
     
     // MARK: - UI Updates
