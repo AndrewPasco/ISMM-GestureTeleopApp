@@ -22,19 +22,29 @@ class ResultOverlayView: UIView {
             return
         }
         
-        // Gesture label
-        if let message = messageLabel {
+        if let message = messageLabel, let context = UIGraphicsGetCurrentContext() {
+            context.saveGState()
+            
+            // Move to top-left corner of the screen and rotate 90° clockwise
+            // This makes the text appear at the top of the screen when device is rotated right
+            context.translateBy(x: 0, y: 0)
+            context.rotate(by: .pi / 2)
+            
             let paragraphStyle = NSMutableParagraphStyle()
             paragraphStyle.alignment = .center
-
+            
             let attributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 24, weight: .bold),
+                .font: UIFont.systemFont(ofSize: 32, weight: .bold),
                 .foregroundColor: UIColor.green,
                 .paragraphStyle: paragraphStyle
             ]
-
-            let textRect = CGRect(x: 0, y: 720, width: rect.width, height: 30)
+            
+            // Position text at what will be the top of the screen after rotation
+            let inset: CGFloat = 20
+            let textRect = CGRect(x: inset, y: -360, width: rect.height - 2 * inset, height: 40)
             message.draw(in: textRect, withAttributes: attributes)
+            
+            context.restoreGState()
         }
         
         let points = points ?? []

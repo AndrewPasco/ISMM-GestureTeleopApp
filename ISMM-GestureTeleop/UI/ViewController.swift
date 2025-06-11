@@ -104,18 +104,54 @@ class ViewController: UIViewController {
             
             appCoordinator?.onConnectionStatusChange = { [weak self] status in
                 DispatchQueue.main.async {
-                    self?.statusLabel.text = {
-                        switch status {
-                        case .connecting: return "Connecting..."
-                        case .connected: return "Connected"
-                        case .failed: return "Connection Failed"
-                        case .disconnected: return "Disconnected"
-                        }
-                    }()
+                    self?.handleConnectionStatusChange(status)
                 }
             }
         }
 
         appCoordinator?.connectToServer()
+    }
+    
+    private func handleConnectionStatusChange(_ status: ConnectionStatus) {
+        // Update status label text
+        statusLabel.text = {
+            switch status {
+            case .connecting: return "Connecting..."
+            case .connected: return "Connected"
+            case .failed: return "Connection Failed"
+            case .disconnected: return "Disconnected"
+            }
+        }()
+        
+        // Hide UI elements after successful connection
+        if status == .connected {
+            hideConnectionUI()
+        } else if status == .failed || status == .disconnected {
+            showConnectionUI()
+        }
+    }
+    
+    private func hideConnectionUI() {
+        UIView.animate(withDuration: 0.5, animations: {
+            self.ipTextField.alpha = 0
+            self.connectButton.alpha = 0
+            self.statusLabel.alpha = 0
+        }) { _ in
+            self.ipTextField.isHidden = true
+            self.connectButton.isHidden = true
+            self.statusLabel.isHidden = true
+        }
+    }
+    
+    private func showConnectionUI() {
+        ipTextField.isHidden = false
+        connectButton.isHidden = false
+        statusLabel.isHidden = false
+        
+        UIView.animate(withDuration: 0.3) {
+            self.ipTextField.alpha = 1
+            self.connectButton.alpha = 1
+            self.statusLabel.alpha = 1
+        }
     }
 }

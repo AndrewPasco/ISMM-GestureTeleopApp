@@ -12,7 +12,6 @@
 //  MediaPipe gesture recognition, estimates 3D palm poses, and transmits teleoperation
 //  commands to remote robot systems via TCP.
 //
-// TODO: Low pass filtering for orientation, moving average filtering for position?
 // TODO: Landscape orientation by default - match workspace
 
 import UIKit
@@ -38,6 +37,8 @@ private struct GestureConfig {
     static let gripperThreshold: Float = 0.9
     /// Duration in milliseconds to display command status messages
     static let commandStatusDisplayDurationMs: Int = 500
+    /// Minimum cooldown for gripper and reset commands
+    static let commandCooldownMs: Int = 2000
 }
 
 // MARK: - Gesture Recognition State
@@ -49,6 +50,9 @@ private struct GestureState {
     var isTracking: Bool = false
     var gripperClosed: Bool = false
     var lastValidPose: Pose?
+    
+    var lastGripperCommandTime: Int?
+    var lastResetCommandTime: Int?
     
     /// Updates a confidence value based on whether the gesture is currently detected
     /// - Parameters:
@@ -72,6 +76,34 @@ private struct GestureState {
         openPalmConfidence = updateConfidence(openPalmConfidence, shouldIncrease: openPalm)
         victoryConfidence = updateConfidence(victoryConfidence, shouldIncrease: victory)
         resetConfidence = updateConfidence(resetConfidence, shouldIncrease: reset)
+    }
+    
+    /// Checks if gripper command is on cooldown
+    /// - Parameter currentTime: Current timestamp in milliseconds
+    /// - Returns: true if gripper command can be sent
+    func canSendGripperCommand(currentTime: Int) -> Bool {
+        guard let lastTime = lastGripperCommandTime else { return true }
+        return (currentTime - lastTime) >= GestureConfig.commandCooldownMs
+    }
+    
+    /// Checks if reset command is on cooldown
+    /// - Parameter currentTime: Current timestamp in milliseconds
+    /// - Returns: true if reset command can be sent
+    func canSendResetCommand(currentTime: Int) -> Bool {
+        guard let lastTime = lastResetCommandTime else { return true }
+        return (currentTime - lastTime) >= GestureConfig.commandCooldownMs
+    }
+    
+    /// Records when gripper command was sent
+    /// - Parameter timestamp: Current timestamp in milliseconds
+    mutating func recordGripperCommand(timestamp: Int) {
+        lastGripperCommandTime = timestamp
+    }
+    
+    /// Records when reset command was sent
+    /// - Parameter timestamp: Current timestamp in milliseconds
+    mutating func recordResetCommand(timestamp: Int) {
+        lastResetCommandTime = timestamp
     }
 }
 
@@ -335,14 +367,15 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
     ///   - timestamp: Frame timestamp in milliseconds
     ///   - gesture: Recognized gesture name
     private func finishProcessing(previewResult: GestureRecognizerResult?, pose: Pose?, K: matrix_float3x3?, timestamp: Int?, gesture: String?) {
+        let currentTime = timestamp ?? Int(Date().timeIntervalSince1970 * 1000)
+        
         // Process gesture and get status message
-        if let statusMessage = processGesture(gesture, pose: pose) {
-            let currentTime = timestamp ?? Int(Date().timeIntervalSince1970 * 1000)
+        if let statusMessage = processGesture(gesture, pose: pose, timestamp: currentTime) {
             commandStatus.update(message: statusMessage, timestamp: currentTime)
         }
         
         // Determine display message
-        let currentTime = timestamp ?? Int(Date().timeIntervalSince1970 * 1000)
+        
         let displayMessage = commandStatus.getDisplayMessage(currentTime: currentTime)
         
         // Update UI on main thread
@@ -367,15 +400,15 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
     ///   - gesture: Name of the recognized gesture
     ///   - pose: 3D pose of the hand
     /// - Returns: Status message for UI display, if any
-    private func processGesture(_ gesture: String?, pose: Pose?) -> String? {
+    private func processGesture(_ gesture: String?, pose: Pose?, timestamp: Int) -> String? {
         updateGestureConfidences(for: gesture)
         
-        // Check commands in priority order
-        if let gripperCommand = processGripperCommand() {
+        // Check commands in priority order, now with cooldown
+        if let gripperCommand = processGripperCommand(timestamp: timestamp) {
             return gripperCommand
         }
         
-        if let resetCommand = processResetCommand() {
+        if let resetCommand = processResetCommand(timestamp: timestamp) {
             return resetCommand
         }
         
@@ -394,12 +427,16 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
     
     /// Processes gripper commands based on fist gesture confidence
     /// - Returns: Status message if gripper command was triggered
-    private func processGripperCommand() -> String? {
-        guard gestureState.victoryConfidence > GestureConfig.gripperThreshold else { return nil }
+    private func processGripperCommand(timestamp: Int) -> String? {
+        guard gestureState.victoryConfidence > GestureConfig.gripperThreshold,
+              gestureState.canSendGripperCommand(currentTime: timestamp) else {
+            return nil
+        }
         
         sendCommand(.gripper, pose: nil)
         gestureState.victoryConfidence = 0
         gestureState.gripperClosed.toggle()
+        gestureState.recordGripperCommand(timestamp: timestamp)
         
         let action = gestureState.gripperClosed ? "Closing" : "Opening"
         print("\(action.lowercased()) gripper")
@@ -408,11 +445,15 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
     
     /// Processes reset commands based on reset (horns) gesture confidence
     /// - Returns: Status message if reset command was triggered
-    private func processResetCommand() -> String? {
-        guard gestureState.resetConfidence > GestureConfig.commandThreshold else { return nil }
+    private func processResetCommand(timestamp: Int) -> String? {
+        guard gestureState.resetConfidence > GestureConfig.commandThreshold,
+              gestureState.canSendResetCommand(currentTime: timestamp) else {
+            return nil
+        }
         
         sendCommand(.reset, pose: nil)
         gestureState.resetConfidence = 0
+        gestureState.recordResetCommand(timestamp: timestamp)
         print("reset")
         return "Resetting"
     }
@@ -485,7 +526,7 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
     /// - Parameter cameraFramePose: Pose in camera coordinate system
     /// - Returns: Pose transformed to robot coordinate system
     private func transformToRobotFrame(_ cameraFramePose: Pose) -> Pose {
-        let frameRot = rotx(-Double.pi/2) * rotz(-Double.pi/2)
+        let frameRot = rotx(-Double.pi/2) * rotz(0) // rotz(0) for landscape, rotz(-.pi/2) for portrait?
         let poseMat = poseMatrix(pos: cameraFramePose.translation, rot: cameraFramePose.rot)
         let transformedMat = transformFromRot(frameRot) * poseMat
         let (newTrans, newRot) = posRotFromMat(transformedMat)
