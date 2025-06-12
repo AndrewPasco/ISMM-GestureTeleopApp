@@ -266,6 +266,74 @@ class CameraManager: NSObject, AVCaptureDataOutputSynchronizerDelegate {
             self.onFrameCaptured?(sampleBuffer, depthData)
         }
     }
+    
+    
+// Testing to verify that AVDepthData is z axis from camera plane, not cartesian distance (verified successfully)
+//    func dataOutputSynchronizer(_ synchronizer: AVCaptureDataOutputSynchronizer,
+//                                   didOutput synchronizedDataCollection: AVCaptureSynchronizedDataCollection) {
+//        guard let syncedDepthData = synchronizedDataCollection.synchronizedData(for: depthDataOutput) as? AVCaptureSynchronizedDepthData,
+//              !syncedDepthData.depthDataWasDropped
+//        else {
+//            return
+//        }
+//
+//        let depthData = syncedDepthData.depthData
+//        analyzeDepthData(depthData)
+//    }
+//    
+//    func analyzeDepthData(_ depthData: AVDepthData) {
+//        let depthMap = depthData.depthDataMap
+//        let width = CVPixelBufferGetWidth(depthMap)
+//        let height = CVPixelBufferGetHeight(depthMap)
+//        let pixelFormat = CVPixelBufferGetPixelFormatType(depthMap)
+//        
+//        print("Depth map info:")
+//        print("  Resolution: \(width) x \(height)")
+//        print("  Pixel format: \(pixelFormat)")
+//        print("  Data type: \(depthData.depthDataType)")
+//        
+//        CVPixelBufferLockBaseAddress(depthMap, .readOnly)
+//        defer { CVPixelBufferUnlockBaseAddress(depthMap, .readOnly) }
+//        
+//        // Handle different pixel formats
+//        func depthAt(x: Int, y: Int) -> Float32? {
+//            guard x >= 0 && x < width && y >= 0 && y < height else { return nil }
+//            
+//            switch pixelFormat {
+//            case kCVPixelFormatType_DepthFloat32:
+//                let floatBuffer = unsafeBitCast(CVPixelBufferGetBaseAddress(depthMap), to: UnsafeMutablePointer<Float32>.self)
+//                return floatBuffer[y * width + x]
+//                
+//            case kCVPixelFormatType_DisparityFloat32:
+//                let floatBuffer = unsafeBitCast(CVPixelBufferGetBaseAddress(depthMap), to: UnsafeMutablePointer<Float32>.self)
+//                let disparity = floatBuffer[y * width + x]
+//                // Convert disparity to depth (depth = 1/disparity for normalized disparity)
+//                return disparity > 0 ? 1.0 / disparity : Float32.infinity
+//                
+//            default:
+//                print("Unsupported pixel format: \(pixelFormat)")
+//                return nil
+//            }
+//        }
+//        
+//        let pointsToCheck = [
+//            ("Center", width / 2, height / 2),
+//            ("Quarter from center-left", width / 4, height / 2),
+//            ("Quarter from center-right", 3 * width / 4, height / 2),
+//            ("Quarter from center-top", width / 2, height / 4),
+//            ("Quarter from center-bottom", width / 2, 3 * height / 4)
+//        ]
+//        
+//        print("\nDepth values (in meters):")
+//        for (label, x, y) in pointsToCheck {
+//            if let depth = depthAt(x: x, y: y) {
+//                print("  \(label) (\(x),\(y)): \(String(format: "%.3f", depth))m")
+//            } else {
+//                print("  \(label) (\(x),\(y)): Invalid depth")
+//            }
+//        }
+//        print("-------------")
+//    }
 
     // MARK: - Session Control
     
