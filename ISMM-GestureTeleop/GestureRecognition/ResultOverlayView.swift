@@ -66,7 +66,6 @@ class ResultOverlayView: UIView {
         // Draw 3D coordinate axes on wrist landmark (points[0])
         if let centroid3D = centroid3D, let axes = axes3D, let K = intrinsics, !points.isEmpty {
             // Camera intrinsics are for 1920x1080, but preview is 763x390
-            print("entering if")
             let cameraWidth: Double = 1920.0
             let cameraHeight: Double = 1080.0
             let previewWidth = Double(DefaultConstants.PREVIEW_DIMS.HEIGHT)   // 763
@@ -81,11 +80,6 @@ class ResultOverlayView: UIView {
             let fy = Double(K.columns.1.y) * scaleY
             let cx = Double(K.columns.2.x) * scaleX  // Principal point x
             let cy = Double(K.columns.2.y) * scaleY  // Principal point y
-            
-            print("fx \(fx)")
-            print("fy \(fy)")
-            print("cx \(cx)")
-            print("cy \(cy)")
             
             let project: (SIMD3<Double>) -> CGPoint? = { point in
                 guard point.z > 0 else {
@@ -117,7 +111,7 @@ class ResultOverlayView: UIView {
             
             // Calculate the end points of each axis in 3D, then project them
             let xEnd2D = project(centroid3D - axes.columns.0 * scale)  // X-axis (red)
-            let yEnd2D = project(centroid3D - axes.columns.1 * scale)  // Y-axis (green)
+            let yEnd2D = project(centroid3D - axes.columns.1 * scale)  // Y-axis (green) (- is correct, but since preview is mirrored it doesn't look like a right handed frame unless you mirror the image)
             let zEnd2D = project(centroid3D - axes.columns.2 * scale)  // Z-axis (blue)
             let origin3D_projected = project(centroid3D)  // Project the 3D origin for direction calculation
             

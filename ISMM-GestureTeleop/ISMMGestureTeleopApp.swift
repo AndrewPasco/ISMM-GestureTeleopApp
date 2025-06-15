@@ -517,7 +517,7 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
         message += "\n" // comment if sending to real system
         
         if let dataToSend = message.data(using: .utf8) {
-            //tcpClient.send(data: dataToSend) // comment if testing in place
+            tcpClient.send(data: dataToSend) // comment if testing in place
         }
     }
     

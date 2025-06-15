@@ -132,8 +132,10 @@ class PoseEstimator {
         }
 
         guard palmPoints3D.count >= 3 else { return nil }
+        
+        guard let handedness = result?.handedness.first?[0].categoryName else { return nil }
 
-        return pointsToPose(points: palmPoints3D)
+        return pointsToPose(handedness: handedness, points: palmPoints3D)
     }
 
     // MARK: - Pose Computation from 3D Points
@@ -149,7 +151,7 @@ class PoseEstimator {
      * - Parameter points: Array of 3D palm landmark coordinates
      * - Returns: Hand pose with translation (centroid) and rotation matrix, or nil if insufficient points
      */
-    static func pointsToPose(points: [simd_double3]) -> Pose? {
+    static func pointsToPose(handedness: String, points: [simd_double3]) -> Pose? {
         let N = points.count
         guard N >= 3 else { return nil }
 
@@ -163,7 +165,10 @@ class PoseEstimator {
         }
 
         // Construct coordinate frame
-        let zAxis = simd_normalize(normal)
+        var zAxis = simd_normalize(normal)
+        if handedness == "Left" {
+            zAxis = -zAxis
+        }
         var xAxis = simd_normalize(points[0] - centroid)
         
         // Project x-axis onto plane using Gram-Schmidt orthogonalization
