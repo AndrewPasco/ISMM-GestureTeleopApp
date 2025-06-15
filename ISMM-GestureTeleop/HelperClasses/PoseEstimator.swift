@@ -172,7 +172,7 @@ class PoseEstimator {
 
         let rotationMatrix = matrix_double3x3(columns: (xAxis, yAxis, zAxis))
         
-        let pose = Pose(translation: centroid, rot: rotationMatrix)
+        let pose = Pose(translation: points[0], rot: rotationMatrix)
         
         return pose
     }
@@ -200,10 +200,10 @@ class PoseEstimator {
         guard points.count >= 3 else { return nil }
 
         var bestNormal: simd_double3? = nil
+        var bestRMS = Double.infinity
         var maxInliers = 0
         let n = points.count
 
-        // RANSAC: try all 3-point combinations
         for i in 0..<(n - 2) {
             for j in (i + 1)..<(n - 1) {
                 for k in (j + 1)..<n {
@@ -220,11 +220,33 @@ class PoseEstimator {
                     let d = -simd_dot(normal, p1)
                     let plane = Plane(normal: normal, d: d)
 
-                    // Count inliers
-                    let inliers = points.filter { abs(plane.distance(to: $0)) < threshold }
+                    // Find inliers and calculate their distances
+                    var inlierDistances: [Double] = []
+                    for point in points {
+                        let distance = abs(plane.distance(to: point))
+                        if distance < threshold {
+                            inlierDistances.append(distance)
+                        }
+                    }
 
-                    if inliers.count > maxInliers && inliers.count >= minInliers {
-                        maxInliers = inliers.count
+                    let inlierCount = inlierDistances.count
+                    
+                    // Skip if not enough inliers
+                    guard inlierCount >= minInliers else { continue }
+
+                    // Calculate RMS distance for inliers
+                    let sumSquaredDistances = inlierDistances.reduce(0) { $0 + $1 * $1 }
+                    let rmsDistance = sqrt(sumSquaredDistances / Double(inlierCount))
+
+                    // Update best plane using lexicographic ordering:
+                    // 1. More inliers is better
+                    // 2. If same inlier count, lower RMS is better
+                    let isBetter = inlierCount > maxInliers ||
+                                  (inlierCount == maxInliers && rmsDistance < bestRMS)
+                    
+                    if isBetter {
+                        maxInliers = inlierCount
+                        bestRMS = rmsDistance
                         bestNormal = simd_normalize(normal)
                     }
                 }

@@ -295,6 +295,7 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
         // apply SLERP from last valid pose to newly computed pose (only if we have a last valid pose)
         // Save pose-slerp as last valid pose
         if let lastPose = gestureState.lastValidPose {
+            // SLERP for orientation filtering
             let lastRot3D = Rotation3D(simd_quatd(lastPose.rot))
             let newRot3D = Rotation3D(simd_quatd(pose.rot))
             
@@ -302,7 +303,10 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
             let slerpQuat = rotSLERP.quaternion
             let slerpRot = R_from_quat(slerpQuat)
             
-            gestureState.lastValidPose = Pose(translation: pose.translation, rot: slerpRot)
+            // EMA for position filtering
+            let emaPos = posEMA(old: lastPose.translation, new: pose.translation)
+            
+            gestureState.lastValidPose = Pose(translation: emaPos, rot: slerpRot)
         } else {
             print("setting new lastValidPose")
             gestureState.lastValidPose = pose
@@ -488,11 +492,6 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
     ///   - command: Type of command to send
     ///   - pose: 3D pose data to include with the command (if applicable)
     private func sendCommand(_ command: TeleopCommand, pose: Pose?) {
-        // Don't send track command if hand goes offscreen
-        if command == .track && pose == nil {
-            return
-        }
-
         var message: String = command.rawValue
         
         // Handle different command types
@@ -515,10 +514,10 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
             message += formatPoseForTransmission(sendPose)
         }
         
-        //message += "\n" // comment if sending to real system
+        message += "\n" // comment if sending to real system
         
         if let dataToSend = message.data(using: .utf8) {
-            tcpClient.send(data: dataToSend) // comment if testing in place
+            //tcpClient.send(data: dataToSend) // comment if testing in place
         }
     }
     
@@ -583,6 +582,10 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
     }
     
     // MARK: - Utility Methods
+    
+    func posEMA(old: simd_double3, new: simd_double3) -> simd_double3 {
+        return DefaultConstants.EMA_ALPHA * new + (1.0 - DefaultConstants.EMA_ALPHA) * old
+    }
     
     /// Initiates connection to the target system
     func connectToServer() {

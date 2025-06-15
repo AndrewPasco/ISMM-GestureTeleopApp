@@ -35,7 +35,8 @@ struct DefaultConstants {
     static let PREVIEW_DIMS = (WIDTH: 390, HEIGHT: 763) // should probably be grabbing these from device config
     static let IMAGE_DIMS = (WIDTH: 1920.0, HEIGHT: 1080.0)
     
-    static let SLERP_T = 0.2 // lower seems better on this
+    static let SLERP_T = 0.15 // lower seems better on this, probably 0.15/0.2, higher is still too noisy and lower seems to limit range of motion
+    static let EMA_ALPHA = 0.5
 }
 
 // MARK: GestureRecognizerDelegate
