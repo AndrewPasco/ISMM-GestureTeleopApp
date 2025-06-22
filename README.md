@@ -9,7 +9,7 @@ ISMM-GestureTeleop transforms your iPhone into a sophisticated gesture control i
 ## Key Features
 
 - **Real-time Hand Gesture Recognition**: Utilizes MediaPipe's GestureRecognizer for accurate hand gesture detection
-- **3D Palm Pose Estimation**: Combines RGB-D input with SVD-based plane fitting for precise 3D pose calculation
+- **3D Palm Pose Estimation**: Uses RGB-D input and identified orthogonal keypoint vectors for pose estimation
 - **Synchronized Data Capture**: Coordinates RGB and depth frame capture using AVCaptureMultiCamSession
 - **TCP Communication**: Reliable streaming of gesture and pose data to remote robot controllers
 - **Visual Feedback**: Real-time overlay showing hand landmarks and recognized gestures
@@ -70,7 +70,7 @@ open ISMM-GestureTeleop.xcworkspace
 
 - **`ISMMGestureTeleopApp`**: Main coordinator managing the entire gesture recognition and teleoperation pipeline
 - **`CameraManager`**: Handles synchronized RGB and depth data capture using AVFoundation
-- **`PoseEstimator`**: Implements 3D pose estimation algorithms using plane best-fitting
+- **`PoseEstimator`**: Implements 3D pose estimation algorithms
 - **`TCPClient`**: Manages reliable TCP socket connections and data transmission
 - **`GestureRecognizerResultDelegate`**: Bridges MediaPipe results with the main application logic
 - **`ResultOverlayView`**: Provides visual feedback with hand landmark rendering and status display
@@ -99,6 +99,15 @@ Modify sensitivity and thresholds in `DefaultConstants.swift`:
 static let minHandDetectionConfidence: Float = 0.5
 static let minHandPresenceConfidence: Float = 0.5
 static let minTrackingConfidence: Float = 0.5
+```
+
+`DefaultConstants.swift` also includes filtering constants and rejection thresholds:
+```swift
+static let SLERP_T = 0.15
+static let EMA_ALPHA = 0.5
+
+static let MAX_ANGLE_DIFF = Double.pi/10 // 18 degrees
+static let MAX_POS_DIFF = 0.05 // 50cm
 ```
 
 Modify gesture to command behavior in `ISMMGestureTeleopApp.swift`:

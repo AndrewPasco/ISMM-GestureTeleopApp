@@ -304,11 +304,19 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
             let degDiff = angleDiff * 180/Double.pi
             print("Angle diff, deg: \(degDiff)")
             
-            if angleDiff > DefaultConstants.MAX_ANGLE_DIFF {
-                print("rejecting pose due to large angle diff")
-                finishProcessing(previewResult: nil, pose: nil, K: nil, timestamp: timestampInMilliseconds, gesture: nil)
-            }
+            let posDiff = length(lastPose.translation - pose.translation)
+            print("Pos diff, m: \(posDiff)")
             
+            if angleDiff > DefaultConstants.MAX_ANGLE_DIFF || posDiff > DefaultConstants.MAX_POS_DIFF {
+                print("rejecting pose due to large diff")
+                finishProcessing(previewResult: nil, pose: nil, K: nil, timestamp: timestampInMilliseconds, gesture: nil)
+                if gestureState.isTracking {
+                    return
+                } else {
+                    gestureState.lastValidPose = nil
+                    return
+                }
+            }
             
             // SLERP for orientation filtering
             let lastRot3D = Rotation3D(lastPoseQuat)
@@ -394,7 +402,6 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
         }
         
         // Determine display message
-        
         let displayMessage = commandStatus.getDisplayMessage(currentTime: currentTime)
         
         // Update UI on main thread
