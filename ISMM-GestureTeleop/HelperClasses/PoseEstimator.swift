@@ -86,7 +86,7 @@ class PoseEstimator {
         let cx = K[2][0]
         let cy = K[2][1]
 
-        var palmPoints3D: [simd_double3] = []
+        var palmPoints3D = [Int:simd_double3]()
 
         // Convert palm landmarks to 3D coordinates
         for index in DefaultConstants.PALM_INDICES {
@@ -128,7 +128,7 @@ class PoseEstimator {
             let y = Double((Float(pixelY) - cy) * depth / fy)
             let z = Double(depth)
 
-            palmPoints3D.append(simd_double3(x, y, z))
+            palmPoints3D[index] = (simd_double3(x, y, z))
         }
 
         guard palmPoints3D.count >= 3 else { return nil }
@@ -151,33 +151,47 @@ class PoseEstimator {
      * - Parameter points: Array of 3D palm landmark coordinates
      * - Returns: Hand pose with translation (centroid) and rotation matrix, or nil if insufficient points
      */
-    static func pointsToPose(handedness: String, points: [simd_double3]) -> Pose? {
-        let N = points.count
-        guard N >= 3 else { return nil }
-
-        // Compute centroid
-        let sum = points.reduce(simd_double3(repeating: 0), +)
-        let centroid = sum / Double(N)
-
-        // Find best-fit plane normal
-        guard let normal = bestPlaneNormal(from: points) else {
-            return nil
-        }
-
-        // Construct coordinate frame
-        var zAxis = simd_normalize(normal)
+    static func pointsToPose(handedness: String, points: [Int:simd_double3]) -> Pose? {
+//        let N = points.count
+//        guard N >= 3 else { return nil }
+        
+        // y: 13->5
+        // x: 12->9
+        
+        guard let wristPos = points[0], let pointerMCP = points[5], let midMCP = points[9], let midTip = points[12], let ringMCP = points[13] else { return nil }
+        
+        let xAxis = simd_normalize(midMCP - midTip)
+        
+//        // Compute centroid
+//        let sum = points.reduce(simd_double3(repeating: 0), +)
+//        let centroid = sum / Double(N)
+//
+//        // Find best-fit plane normal
+//        guard let normal = bestPlaneNormal(from: points) else {
+//            return nil
+//        }
+//
+//        // Construct coordinate frame (in new approach, will need to reverse y (13->5 will be the other direction
+//        var zAxis = simd_normalize(normal)
+//        if handedness == "Left" {
+//            zAxis = -zAxis
+//        }
+//        var xAxis = simd_normalize(points[0] - centroid)
+        var yAxis = simd_normalize(pointerMCP - ringMCP)
         if handedness == "Left" {
-            zAxis = -zAxis
+            yAxis = -yAxis
         }
-        var xAxis = simd_normalize(points[0] - centroid)
         
-        // Project x-axis onto plane using Gram-Schmidt orthogonalization
-        xAxis = simd_normalize(xAxis - simd_dot(xAxis, zAxis) * zAxis)
-        let yAxis = simd_normalize(simd_cross(zAxis, xAxis))
-
+//        // Project x-axis onto plane using Gram-Schmidt orthogonalization
+//        xAxis = simd_normalize(xAxis - simd_dot(xAxis, zAxis) * zAxis)
+        yAxis = simd_normalize(yAxis - simd_dot(yAxis, xAxis) * xAxis)
+        
+        //let yAxis = simd_normalize(simd_cross(zAxis, xAxis))
+        let zAxis = simd_normalize(simd_cross(xAxis, yAxis))
+        
         let rotationMatrix = matrix_double3x3(columns: (xAxis, yAxis, zAxis))
-        
-        let pose = Pose(translation: points[0], rot: rotationMatrix)
+
+        let pose = Pose(translation: wristPos, rot: rotationMatrix)
         
         return pose
     }

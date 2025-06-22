@@ -295,9 +295,24 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
         // apply SLERP from last valid pose to newly computed pose (only if we have a last valid pose)
         // Save pose-slerp as last valid pose
         if let lastPose = gestureState.lastValidPose {
+            // Verify no large/jerky movement or faulty readings
+            let lastPoseQuat = simd_quatd(lastPose.rot)
+            let newPoseQuat = simd_quatd(pose.rot)
+            let clampedDot = min(1.0, max(-1.0, abs(simd_dot(lastPoseQuat.vector, newPoseQuat.vector))))
+            let angleDiff = 2 * acos(clampedDot)
+            
+            let degDiff = angleDiff * 180/Double.pi
+            print("Angle diff, deg: \(degDiff)")
+            
+            if angleDiff > DefaultConstants.MAX_ANGLE_DIFF {
+                print("rejecting pose due to large angle diff")
+                finishProcessing(previewResult: nil, pose: nil, K: nil, timestamp: timestampInMilliseconds, gesture: nil)
+            }
+            
+            
             // SLERP for orientation filtering
-            let lastRot3D = Rotation3D(simd_quatd(lastPose.rot))
-            let newRot3D = Rotation3D(simd_quatd(pose.rot))
+            let lastRot3D = Rotation3D(lastPoseQuat)
+            let newRot3D = Rotation3D(newPoseQuat)
             
             let rotSLERP = Rotation3D.slerp(from:lastRot3D, to:newRot3D, t:DefaultConstants.SLERP_T)
             let slerpQuat = rotSLERP.quaternion
@@ -514,7 +529,7 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
             message += formatPoseForTransmission(sendPose)
         }
         
-        //message += "\n" // comment if sending to real system
+        message += "\n" // comment if sending to real system
         
         if let dataToSend = message.data(using: .utf8) {
             tcpClient.send(data: dataToSend) // comment if testing in place
@@ -525,9 +540,9 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
     /// - Parameter cameraFramePose: Pose in camera coordinate system
     /// - Returns: Pose transformed to robot coordinate system
     private func transformToRobotFrame(_ cameraFramePose: Pose) -> Pose {
-        let frameRot = rotx(-Double.pi/2) * rotz(0) // rotz(0) for landscape, rotz(-.pi/2) for portrait?
+        let rotAB = rotx(Double.pi/2) * rotz(0) // rotz(0) for landscape, rotz(.pi/2) for portrait?
         let poseMat = poseMatrix(pos: cameraFramePose.translation, rot: cameraFramePose.rot)
-        let transformedMat = transformFromRot(frameRot) * poseMat
+        let transformedMat = transformFromRot(rotAB).transpose * poseMat
         let (newTrans, newRot) = posRotFromMat(transformedMat)
         return Pose(translation: newTrans, rot: newRot)
     }
@@ -569,14 +584,22 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
     private func extractPalmPoints(from landmarks: [NormalizedLandmark]) -> [CGPoint] {
         var points: [CGPoint] = []
         
-        for index in DefaultConstants.PALM_INDICES {
-            guard index < landmarks.count else { continue }
-            
-            let landmark = landmarks[index]
+        // try drawing all points
+        for landmark in landmarks {
             let x = Int(Float(DefaultConstants.PREVIEW_DIMS.WIDTH) * landmark.y)
             let y = Int(Float(DefaultConstants.PREVIEW_DIMS.HEIGHT) * landmark.x)
             points.append(CGPoint(x: x, y: y))
         }
+        
+
+//        for index in DefaultConstants.PALM_INDICES {
+//            guard index < landmarks.count else { continue }
+//            
+//            let landmark = landmarks[index]
+//            let x = Int(Float(DefaultConstants.PREVIEW_DIMS.WIDTH) * landmark.y)
+//            let y = Int(Float(DefaultConstants.PREVIEW_DIMS.HEIGHT) * landmark.x)
+//            points.append(CGPoint(x: x, y: y))
+//        }
         
         return points
     }

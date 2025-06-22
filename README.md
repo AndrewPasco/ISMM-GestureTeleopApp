@@ -4,7 +4,7 @@ A real-time iOS application for gesture-based robot teleoperation that captures 
 
 ## Overview
 
-ISMM-GestureTeleop transforms your iPhone into a sophisticated gesture control interface for robotic systems. The app leverages the device's TrueDepth or LiDAR camera to capture both RGB and depth information, enabling precise 3D hand tracking and pose estimation. Recognized gestures are translated into robot commands and transmitted over TCP for real-time teleoperation.
+ISMM-GestureTeleop transforms your iPhone into a sophisticated gesture control interface for robotic systems. The app leverages the device's TrueDepth camera to capture both RGB and depth information, enabling precise 3D hand tracking and pose estimation. Recognized gestures are translated into robot commands and transmitted over TCP for real-time teleoperation.
 
 ## Key Features
 
@@ -26,12 +26,12 @@ ISMM-GestureTeleop transforms your iPhone into a sophisticated gesture control i
 ### Hardware
 - iOS device with TrueDepth camera (iPhone X and later)
     - NOTE: currently only in development testing with iPhone 14
-- Minimum iOS 14.0
+- Minimum iOS 17.0 (Spatial package required)
 
 ### Software
 - Xcode 15.0 or later
 - Swift 5.9+
-- CocoaPods or Swift Package Manager
+- CocoaPods
 
 ## Installation
 
@@ -44,6 +44,9 @@ cd ISMM-GestureTeleop
 ### 2. Install Dependencies
 
 #### Using CocoaPods
+
+For installation instructions: https://guides.cocoapods.org/using/getting-started.html#getting-started
+
 ```bash
 pod install
 open ISMM-GestureTeleop.xcworkspace
@@ -67,7 +70,7 @@ open ISMM-GestureTeleop.xcworkspace
 
 - **`ISMMGestureTeleopApp`**: Main coordinator managing the entire gesture recognition and teleoperation pipeline
 - **`CameraManager`**: Handles synchronized RGB and depth data capture using AVFoundation
-- **`PoseEstimator`**: Implements 3D pose estimation algorithms using SVD-based plane fitting
+- **`PoseEstimator`**: Implements 3D pose estimation algorithms using plane best-fitting
 - **`TCPClient`**: Manages reliable TCP socket connections and data transmission
 - **`GestureRecognizerResultDelegate`**: Bridges MediaPipe results with the main application logic
 - **`ResultOverlayView`**: Provides visual feedback with hand landmark rendering and status display
@@ -87,7 +90,7 @@ open ISMM-GestureTeleop.xcworkspace
 Update the default IP address and port in `ViewController.swift`:
 ```swift
 ipTextField.text = "HOST_IP"
-let port = 5000  // Adjust as needed
+let port = 6789  // Adjust as needed
 ```
 
 ### Gesture Recognition Parameters
@@ -104,10 +107,11 @@ private struct GestureConfig {
     static let maxConfidence: Float = 1.0
     static let minConfidence: Float = 0.0
     static let gestureIncrement: Float = 0.04
-    static let gestureDecrement: Float = 0.09
+    static let gestureDecrement: Float = 0.027
     static let commandThreshold: Float = 0.7
     static let gripperThreshold: Float = 0.9
     static let commandStatusDisplayDurationMs: Int = 500
+    static let commandCooldownMs: Int = 2000
 }
 ```
 
@@ -120,12 +124,12 @@ static let modelPath = Bundle.main.path(forResource: "gesture_recognizer", ofTyp
 ## Usage
 
 1. **Launch the App**: Open the app on your iOS device
-2. **Enter Robot IP**: Input the IP address of your target robot system
+2. **Enter Robot System IP**: Input the IP address of your target robot system
 3. **Connect**: Tap the "Connect" button to establish TCP connection
 4. **Start Gesturing**: Use the supported hand gestures to control your robot:
    - Hold an open palm to begin tracking
-   - Make a fist to toggle the gripper
-   - Show a victory sign to reset the robot
+   - Make a "peace sign" to toggle the gripper
+   - Make a "the horns" gesture to reset the robot to home position
 
 ## Command Protocol
 
@@ -142,11 +146,9 @@ Where `x y z` represents the 3D translation and `qw qx qy qz` represents the ori
 
 ## Known Limitations
 
-- Depth capture requires specific hardware (TrueDepth or LiDAR)
+- Depth capture requires specific hardware (TrueDepth front camera)
 - Performance may vary under different lighting conditions
 - Network latency affects real-time control responsiveness
-- Single-hand tracking only
-
 
 ## License
 
@@ -158,6 +160,6 @@ Some components are adapted from MediaPipe example implementations. See [Gesture
 
 **Andrew Pasco** - [apascos@gmail.com](mailto:apascos@gmail.com)
 
-Developed for gesture-based robot teleoperation research at [Cyber Human Lab - Cambridge Institute for Manufacturing](cyberhuman.io).
+Developed for gesture-based robot teleoperation research at [Cyber Human Lab - Cambridge Institute for Manufacturing](cyberhuman.io) in collaboration with [MIT LEAP Group](leapgroup.mit.edu).
 
 ## Acknowledgments

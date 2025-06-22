@@ -31,12 +31,15 @@ struct DefaultConstants {
     static let modelPath: String? = Bundle.main.path(forResource: "gesture_recognizer", ofType: "task")
     static let delegate: GestureRecognizerDelegate = .CPU
 
-    static let PALM_INDICES = [0, 1, 5, 9, 13, 17]
+    //static let PALM_INDICES = [0, 1, 5, 9, 12, 13, 17]
+    static let PALM_INDICES = [0, 5, 9, 12, 13]
     static let PREVIEW_DIMS = (WIDTH: 390, HEIGHT: 763) // should probably be grabbing these from device config
     static let IMAGE_DIMS = (WIDTH: 1920.0, HEIGHT: 1080.0)
     
     static let SLERP_T = 0.15 // lower seems better on this, probably 0.15/0.2, higher is still too noisy and lower seems to limit range of motion
     static let EMA_ALPHA = 0.5
+    
+    static let MAX_ANGLE_DIFF = Double.pi/10
 }
 
 // MARK: GestureRecognizerDelegate
