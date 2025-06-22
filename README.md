@@ -168,6 +168,6 @@ Some components are adapted from MediaPipe example implementations. See [Gesture
 
 **Andrew Pasco** - [apascos@gmail.com](mailto:apascos@gmail.com)
 
-Developed for gesture-based robot teleoperation research at [Cyber Human Lab - Cambridge Institute for Manufacturing](cyberhuman.io) in collaboration with [MIT LEAP Group](leapgroup.mit.edu).
+Developed for gesture-based robot teleoperation research at [Cyber Human Lab - Cambridge Institute for Manufacturing](https://cyberhuman.io) in collaboration with [MIT LEAP Group](https://leapgroup.mit.edu).
 
 ## Acknowledgments
