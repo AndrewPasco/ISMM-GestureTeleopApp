@@ -4,7 +4,7 @@ A real-time iOS application for gesture-based robot teleoperation that captures 
 
 ## Overview
 
-ISMM-GestureTeleop transforms your iPhone into a sophisticated gesture control interface for robotic systems. The app leverages the device's TrueDepth camera to capture both RGB and depth information, enabling precise 3D hand tracking and pose estimation. Recognized gestures are translated into robot commands and transmitted over TCP for real-time teleoperation.
+ISMM-GestureTeleop enables your iPhone to be used as a gesture control interface for the TeleopLab robotic system. The app leverages the device's TrueDepth camera to capture both RGB and depth information, enabling precise 3D hand tracking and pose estimation. Recognized gestures are translated into robot commands and transmitted over TCP for real-time teleoperation.
 
 ## Key Features
 
@@ -38,7 +38,6 @@ ISMM-GestureTeleop transforms your iPhone into a sophisticated gesture control i
 ### 1. Clone the Repository
 ```bash
 git clone https://github.com/AndrewPasco/ISMM-GestureTeleop.git
-cd ISMM-GestureTeleop
 ```
 
 ### 2. Install Dependencies
@@ -49,8 +48,8 @@ For installation instructions: https://guides.cocoapods.org/using/getting-starte
 
 ```bash
 pod install
-open ISMM-GestureTeleop.xcworkspace
 ```
+open ISMM-GestureTeleop.xcworkspace in xCode
 
 ### 3. Configure MediaPipe Model
 1. Download the MediaPipe hand gesture recognition model "gesture_recognizer.task"
