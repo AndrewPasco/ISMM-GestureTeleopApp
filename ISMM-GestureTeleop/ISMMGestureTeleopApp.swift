@@ -11,8 +11,6 @@
 //  The application captures synchronized RGB and depth frames, processes them through
 //  MediaPipe gesture recognition, estimates 3D palm poses, and transmits teleoperation
 //  commands to remote robot systems via TCP.
-//
-// TODO: Landscape orientation by default - match workspace
 
 import UIKit
 import AVFoundation
@@ -536,7 +534,7 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
             message += formatPoseForTransmission(sendPose)
         }
         
-        message += "\n" // comment if sending to real system
+        //message += "\n" // comment if sending to real system
         
         if let dataToSend = message.data(using: .utf8) {
             tcpClient.send(data: dataToSend) // comment if testing in place
