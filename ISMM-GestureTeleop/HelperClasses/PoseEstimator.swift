@@ -157,7 +157,7 @@ class PoseEstimator {
         
         guard let wristPos = points[0], let pointerMCP = points[5], let midMCP = points[9], let midTip = points[12], let ringMCP = points[13] else { return nil }
         
-        let xAxis = simd_normalize(midMCP - midTip)
+        let xAxis = simd_normalize(wristPos - midTip)
         
         var yAxis = simd_normalize(pointerMCP - ringMCP)
         if handedness == "Left" {

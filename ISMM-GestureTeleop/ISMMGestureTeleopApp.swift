@@ -380,8 +380,6 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
             return
         }
         
-        print("gesture: \(recognizedGesture)")
-        
         finishProcessing(previewResult: previewResult, pose: pose, K: K, timestamp: timestampInMilliseconds, gesture: recognizedGesture)
     }
 
