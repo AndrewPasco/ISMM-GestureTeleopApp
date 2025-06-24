@@ -300,10 +300,10 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
             let angleDiff = 2 * acos(clampedDot)
             
             let degDiff = angleDiff * 180/Double.pi
-            print("Angle diff, deg: \(degDiff)")
+            //print("Angle diff, deg: \(degDiff)")
             
             let posDiff = length(lastPose.translation - pose.translation)
-            print("Pos diff, m: \(posDiff)")
+            //print("Pos diff, m: \(posDiff)")
             
             if angleDiff > DefaultConstants.MAX_ANGLE_DIFF || posDiff > DefaultConstants.MAX_POS_DIFF {
                 print("rejecting pose due to large diff")
@@ -379,6 +379,8 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
             finishProcessing(previewResult: nil, pose: nil, K: nil, timestamp: timestampInMilliseconds, gesture: nil)
             return
         }
+        
+        print("gesture: \(recognizedGesture)")
         
         finishProcessing(previewResult: previewResult, pose: pose, K: K, timestamp: timestampInMilliseconds, gesture: recognizedGesture)
     }
