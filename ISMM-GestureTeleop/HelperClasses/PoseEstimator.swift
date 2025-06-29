@@ -43,7 +43,7 @@ class PoseEstimator {
     static func computePose(
         result: GestureRecognizerResult?,
         frameData: FrameData?
-    ) -> Pose? {
+    ) -> (Pose, simd_double3)? {
         guard let depthMap = frameData?.depthData.depthDataMap else { return nil }
         
         // Validate depth data format
@@ -124,18 +124,26 @@ class PoseEstimator {
             }
             
             // Convert to 3D camera coordinates using pinhole camera model
-            let x = Double((Float(pixelX) - cx) * depth / fx)
-            let y = Double((Float(pixelY) - cy) * depth / fy)
-            let z = Double(depth)
+//            let x = Double((Float(pixelX) - cx) * depth / fx)
+//            let y = Double((Float(pixelY) - cy) * depth / fy)
+//            let z = Double(depth)
             
-            palmPoints3D[index] = (simd_double3(x, y, z))
+            let xp = Double((Float(pixelX) - cx) / fx)
+            let yp = Double((Float(pixelY) - cy) / fy)
+            let d = simd_normalize(simd_double3(xp, yp, 1.0))
+            
+            //palmPoints3D[index] = (simd_double3(x, y, z))
+            
+            palmPoints3D[index] = (Double(depth) * d)
         }
         
         guard palmPoints3D.count >= 3 else { return nil }
         
         guard let handedness = result?.handedness.first?[0].categoryName else { return nil }
         
-        return pointsToPose(handedness: handedness, points: palmPoints3D)
+        let pose = pointsToPose(handedness: handedness, points: palmPoints3D)
+        
+        return (pose, palmPoints3D[12]) as? (Pose, simd_double3)
     }
     
     // MARK: - Pose Computation from 3D Points
@@ -155,11 +163,11 @@ class PoseEstimator {
         // y: 13->5
         // x: 12->9
         
-        guard let wristPos = points[0], let pointerMCP = points[5], let midMCP = points[9], let midTip = points[12], let ringMCP = points[13] else { return nil }
+        guard let wristPos = points[0], let pointerMCP = points[5], let midTip = points[12], let pinkyMCP = points[17] else { return nil }
         
         let xAxis = simd_normalize(wristPos - midTip)
         
-        var yAxis = simd_normalize(pointerMCP - ringMCP)
+        var yAxis = simd_normalize(pointerMCP - pinkyMCP)
         if handedness == "Left" {
             yAxis = -yAxis
         }

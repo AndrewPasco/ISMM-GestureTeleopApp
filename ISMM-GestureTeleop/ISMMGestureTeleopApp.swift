@@ -26,9 +26,9 @@ private struct GestureConfig {
     static let maxConfidence: Float = 1.0
     static let minConfidence: Float = 0.0
     /// Rate at which gesture confidence increases when detected
-    static let gestureIncrement: Float = 0.04
+    static let gestureIncrement: Float = 0.09
     /// Rate at which gesture confidence decreases when not detected
-    static let gestureDecrement: Float = 0.027
+    static let gestureDecrement: Float = 0.31
     /// Confidence threshold for triggering general commands
     static let commandThreshold: Float = 0.7
     /// Higher confidence threshold for gripper commands (prevents accidental triggering)
@@ -48,6 +48,7 @@ private struct GestureState {
     var isTracking: Bool = false
     var gripperClosed: Bool = false
     var lastValidPose: Pose?
+    var lastValidMidTip: simd_double3?
     
     var lastGripperCommandTime: Int?
     var lastResetCommandTime: Int?
@@ -285,14 +286,14 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
               let processingFrame = processingFrame,
               let timestamp = timestampInMilliseconds,
               !result.landmarks.isEmpty,
-              let pose = PoseEstimator.computePose(result: result, frameData: processingFrame) else {
+              let (pose, midTip) = PoseEstimator.computePose(result: result, frameData: processingFrame) else {
             finishProcessing(previewResult: nil, pose: nil, K: nil, timestamp: timestampInMilliseconds, gesture: nil)
             return
         }
         
         // apply SLERP from last valid pose to newly computed pose (only if we have a last valid pose)
         // Save pose-slerp as last valid pose
-        if let lastPose = gestureState.lastValidPose {
+        if let lastPose = gestureState.lastValidPose, let lastMidTip = gestureState.lastValidMidTip {
             // Verify no large/jerky movement or faulty readings
             let lastPoseQuat = simd_quatd(lastPose.rot)
             let newPoseQuat = simd_quatd(pose.rot)
@@ -302,16 +303,18 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
             let degDiff = angleDiff * 180/Double.pi
             //print("Angle diff, deg: \(degDiff)")
             
-            let posDiff = length(lastPose.translation - pose.translation)
+            let posDiff = length(lastMidTip - midTip)
             //print("Pos diff, m: \(posDiff)")
             
             if angleDiff > DefaultConstants.MAX_ANGLE_DIFF || posDiff > DefaultConstants.MAX_POS_DIFF {
                 print("rejecting pose due to large diff")
+                print("\(posDiff), \(degDiff)")
                 finishProcessing(previewResult: nil, pose: nil, K: nil, timestamp: timestampInMilliseconds, gesture: nil)
                 if gestureState.isTracking {
                     return
                 } else {
                     gestureState.lastValidPose = nil
+                    gestureState.lastValidMidTip = nil
                     return
                 }
             }
@@ -331,6 +334,7 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
         } else {
             print("setting new lastValidPose")
             gestureState.lastValidPose = pose
+            gestureState.lastValidMidTip = midTip
         }
         
         guard let filteredPose = gestureState.lastValidPose else {
@@ -526,6 +530,7 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
             let sendPose = transformToRobotFrame(lastPose)
             message += formatPoseForTransmission(sendPose)
             gestureState.lastValidPose = nil
+            gestureState.lastValidMidTip = nil
             
         case .start, .track:
             // Use current pose for tracking commands
@@ -589,22 +594,22 @@ class ISMMGestureTeleopApp: NSObject, GestureRecognizerLiveStreamDelegate {
     private func extractPalmPoints(from landmarks: [NormalizedLandmark]) -> [CGPoint] {
         var points: [CGPoint] = []
         
-        // try drawing all points
-        for landmark in landmarks {
-            let x = Int(Float(DefaultConstants.PREVIEW_DIMS.WIDTH) * landmark.y)
-            let y = Int(Float(DefaultConstants.PREVIEW_DIMS.HEIGHT) * landmark.x)
-            points.append(CGPoint(x: x, y: y))
-        }
-        
-
-//        for index in DefaultConstants.PALM_INDICES {
-//            guard index < landmarks.count else { continue }
-//            
-//            let landmark = landmarks[index]
+//        // try drawing all points
+//        for landmark in landmarks {
 //            let x = Int(Float(DefaultConstants.PREVIEW_DIMS.WIDTH) * landmark.y)
 //            let y = Int(Float(DefaultConstants.PREVIEW_DIMS.HEIGHT) * landmark.x)
 //            points.append(CGPoint(x: x, y: y))
 //        }
+        
+
+        for index in DefaultConstants.PALM_INDICES {
+            guard index < landmarks.count else { continue }
+            
+            let landmark = landmarks[index]
+            let x = Int(Float(DefaultConstants.PREVIEW_DIMS.WIDTH) * landmark.y)
+            let y = Int(Float(DefaultConstants.PREVIEW_DIMS.HEIGHT) * landmark.x)
+            points.append(CGPoint(x: x, y: y))
+        }
         
         return points
     }

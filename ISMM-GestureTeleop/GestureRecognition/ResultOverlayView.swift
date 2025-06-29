@@ -50,17 +50,17 @@ class ResultOverlayView: UIView {
         let points = points ?? []
         
         // Draw landmarks
-//        for point in points {
-//            let radius: CGFloat = 8.0
-//            let circleRect = CGRect(x: point.x - radius / 2, y: point.y - radius / 2, width: radius, height: radius)
-//            
-//            context.setFillColor(UIColor.red.cgColor)
-//            context.fillEllipse(in: circleRect)
-//            
-//            context.setStrokeColor(UIColor.yellow.cgColor)
-//            context.setLineWidth(2.0)
-//            context.strokeEllipse(in: circleRect)
-//        }
+        for point in points {
+            let radius: CGFloat = 8.0
+            let circleRect = CGRect(x: point.x - radius / 2, y: point.y - radius / 2, width: radius, height: radius)
+            
+            context.setFillColor(UIColor.red.cgColor)
+            context.fillEllipse(in: circleRect)
+            
+            context.setStrokeColor(UIColor.yellow.cgColor)
+            context.setLineWidth(2.0)
+            context.strokeEllipse(in: circleRect)
+        }
         
         
         // Draw 3D coordinate axes on wrist landmark (points[0])
