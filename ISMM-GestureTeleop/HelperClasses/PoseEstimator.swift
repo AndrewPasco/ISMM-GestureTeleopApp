@@ -124,17 +124,11 @@ class PoseEstimator {
             }
             
             // Convert to 3D camera coordinates using pinhole camera model
-//            let x = Double((Float(pixelX) - cx) * depth / fx)
-//            let y = Double((Float(pixelY) - cy) * depth / fy)
-//            let z = Double(depth)
+           let x = Double((Float(pixelX) - cx) * depth / fx)
+           let y = Double((Float(pixelY) - cy) * depth / fy)
+           let z = Double(depth)
             
-            let xp = Double((Float(pixelX) - cx) / fx)
-            let yp = Double((Float(pixelY) - cy) / fy)
-            let d = simd_normalize(simd_double3(xp, yp, 1.0))
-            
-            //palmPoints3D[index] = (simd_double3(x, y, z))
-            
-            palmPoints3D[index] = (Double(depth) * d)
+            palmPoints3D[index] = (simd_double3(x, y, z))
         }
         
         guard palmPoints3D.count >= 3 else { return nil }
