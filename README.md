@@ -18,8 +18,8 @@ ISMM-GestureTeleop enables your iPhone to be used as a gesture control interface
 ## Supported Gestures
 
 - **Open Palm**: Initiates and maintains tracking mode
-- **Closed Fist**: Toggles gripper open/close
-- **Victory Sign**: Resets the robot to home position
+- **Victory Sign**: Toggles gripper open/close
+- **"ILoveYou"**: Resets the robot to home position
 
 ## System Requirements
 
@@ -102,7 +102,7 @@ static let minTrackingConfidence: Float = 0.5
 
 `DefaultConstants.swift` also includes filtering constants and rejection thresholds:
 ```swift
-static let SLERP_T = 0.15
+static let SLERP_T = 0.2
 static let EMA_ALPHA = 0.5
 
 static let MAX_ANGLE_DIFF = Double.pi/10 // 18 degrees
@@ -136,8 +136,8 @@ static let modelPath = Bundle.main.path(forResource: "gesture_recognizer", ofTyp
 3. **Connect**: Tap the "Connect" button to establish TCP connection
 4. **Start Gesturing**: Use the supported hand gestures to control your robot:
    - Hold an open palm to begin tracking
-   - Make a "peace sign" to toggle the gripper
-   - Make a "the horns" gesture to reset the robot to home position
+   - Make a "peace/victory sign" to toggle the gripper
+   - Make a "the horns"/"ILoveYou" gesture to reset the robot to home position
 
 ## Command Protocol
 
@@ -156,7 +156,14 @@ Where `x y z` represents the 3D translation and `qw qx qy qz` represents the ori
 
 - Depth capture requires specific hardware (TrueDepth front camera)
 - Performance may vary under different lighting conditions
+- Palm recognition may vary as hand orients differently with respect to the camera
 - Network latency affects real-time control responsiveness
+
+## Future Work
+
+- Extension of app for use with TrueDepth enabled iPad Pros
+- Additional gestures for orientation locking and speed alteration
+- Development of simulation environment for app testing / data collection without need for physical hardware (separate repository)
 
 ## License
 
@@ -169,5 +176,3 @@ Some components are adapted from MediaPipe example implementations. See [Gesture
 **Andrew Pasco** - [apascos@gmail.com](mailto:apascos@gmail.com)
 
 Developed for gesture-based robot teleoperation research at [Cyber Human Lab - Cambridge Institute for Manufacturing](https://cyberhuman.io) in collaboration with [MIT LEAP Group](https://leapgroup.mit.edu).
-
-## Acknowledgments
