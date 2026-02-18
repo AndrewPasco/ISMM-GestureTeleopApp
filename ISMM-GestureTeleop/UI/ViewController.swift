@@ -83,7 +83,36 @@ class ViewController: UIViewController {
             statusLabel.heightAnchor.constraint(equalToConstant: 36)
         ])
     }
-
+//    @objc private func connectButtonTapped() {
+//        view.endEditing(true)
+//
+//        // 1. Initialize the App Logic (Starts Camera & Logger)
+//        if appCoordinator == nil {
+//            // Use dummy IP/Port since we aren't connecting
+//            appCoordinator = ISMMGestureTeleopApp(host: "127.0.0.1", port: 0, previewView: self.view)
+//            // Setup Preview Layer
+//            if let previewLayer = appCoordinator?.getPreviewLayer() {
+//                previewLayer.frame = previewContainerView.bounds
+//                previewLayer.videoGravity = .resizeAspectFill
+//                previewContainerView.layer.insertSublayer(previewLayer, at: 0)
+//            }
+//        }
+//
+//        // 2. SKIP connectToServer().
+//        // We just want to log locally.
+//        
+//        // 3. Force Hide UI & Update Status
+//        statusLabel.text = "Logging Mode (Offline)"
+//        statusLabel.textColor = .green
+//        
+//        // Manually hide the input fields
+//        ipTextField.isHidden = true
+//        connectButton.isHidden = true
+//        
+//        // Keep status visible so you know it's running
+//        statusLabel.alpha = 1.0
+//        statusLabel.isHidden = false
+//    }
     @objc private func connectButtonTapped() {
         view.endEditing(true)
 
